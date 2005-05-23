@@ -1,6 +1,5 @@
 Recommended reading order of files:
 
 If unfamiliar with delta generators please read README.
-Read INSTALL.
-Read USAGE.
-Read LICENSE.
+
+Then: INSTALL, USAGE, sdreq_README, LICENSE
