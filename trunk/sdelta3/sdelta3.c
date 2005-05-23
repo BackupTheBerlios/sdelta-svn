@@ -1,16 +1,16 @@
 /*
 
-sdelta.c was written and copyrighted by Kyle Sallee
+sdelta3.c was written and copyrighted by Kyle Sallee
 You may use it in accordance with the 
 Sorcerer Public License version 1.1
 Please read LICENSE
 
-sdelta can identify and combine the difference between two files.
+sdelta3 can identify and combine the difference between two files.
 The difference, also called a delta, can be saved to a file.
 Then, the second of two files can be generated 
 from both the delta and first source file.
 
-sdelta is a line blocking dictionary compressor.
+sdelta3 is a word blocking dictionary compressor.
 
 */
 
@@ -33,7 +33,7 @@ sdelta is a line blocking dictionary compressor.
 #endif
 
 #include "input.h"
-#include "sdelta.h"
+#include "sdelta3.h"
 
 char    magic[]    =  { 0x13, 0x04, 00, 02 };
 int	verbosity  =  0;
@@ -80,99 +80,26 @@ void	output_sdelta(FOUND found, TO to, FROM from) {
 
   for ( block = 0;  block < found.count ; block++ ) {
 
-/*
-fprintf(stderr,"blk %i  to %i  from %i  size %i\n",
-        block, 
-        found.pair[block].to.dword,
-        found.pair[block].from.dword,
-        found.pair[block].size.dword);
-*/
-    stretch.dword   =  found.pair[block].to.dword - to.offset;
-
-/*    if ( stretch.dword < 0 ) { */
-
-    if (                to.offset > found.pair[block].to.dword ) {
-      stretch.dword  =  to.offset - found.pair[block].to.dword;
-/*
-fprintf(stderr,"stretch -%i\n",stretch.dword);
-*/
-        found.pair[block].to.dword    += stretch.dword;
-        found.pair[block].from.dword  += stretch.dword;
-        found.pair[block].size.dword  -= stretch.dword;
-      stretch.dword                    = 0;
-    } else stretch.dword = found.pair[block].to.dword - to.offset;
-
+    stretch.dword  =  found.pair[block].to.dword - to.offset;
     origin.dword   =  found.pair[block].from.dword;
       size.dword   =  found.pair[block].size.dword;
-
-/* *** */
-
-    if  ( ( 0x09       >    size.dword ) &&
-          ( block + 1  !=  found.count )
-        ) { found.pair[block].size.dword = 1; continue; }
-
         to.offset  =  found.pair[block].to.dword + size.dword;
 
-/*
-fprintf(stderr,"blk %i  to %i  from %i  size %i\n",
-        block, found.pair[block].to.dword, origin.dword, size.dword);
-*/
+    found.buffer[found.offset++] = stretch.byte.b3;
+    found.buffer[found.offset++] = stretch.byte.b2;
+    found.buffer[found.offset++] = stretch.byte.b1;
+    found.buffer[found.offset++] = stretch.byte.b0;
 
-    /*
-    printf("block                     %i\n", block);
-    printf("found.pair[block].count   %i\n", found.pair[block].count);
-    printf("found.pair[block].from    %i\n", found.pair[block].from);
-    printf("found.pair[block].to      %i\n", found.pair[block].to);
-    printf("stretch                   %i\n", stretch.dword);
-    printf("\n");
-    */
+    found.buffer[found.offset++] = size.byte.b3;
+    found.buffer[found.offset++] = size.byte.b2;
+    found.buffer[found.offset++] = size.byte.b1;
+    found.buffer[found.offset++] = size.byte.b0;
 
-    /*
-    printf("\n");
-    printf("found.pair[block].to + size %i\n", found.pair[block].to + size);
-    printf("\n");
-    */
+    found.buffer[found.offset++] = origin.byte.b3;
+    found.buffer[found.offset++] = origin.byte.b2;
+    found.buffer[found.offset++] = origin.byte.b1;
+    found.buffer[found.offset++] = origin.byte.b0;
 
-                                         byte_val  = 0x00;
-    if ( origin.dword     >= 0x1000000 ) byte_val |= 0xc0;  else
-    if ( origin.dword     >= 0x10000   ) byte_val |= 0x80;  else
-    if ( origin.dword     >= 0x100     ) byte_val |= 0x40;
-
-    if ( size.dword       >= 0x1000000 ) byte_val |= 0x30;  else
-    if ( size.dword       >= 0x10000   ) byte_val |= 0x20;  else
-    if ( size.dword       >= 0x100     ) byte_val |= 0x10;
-
-    if   ( stretch.dword  > 0 )  {       byte_val |= 0x02;
-      if ( stretch.dword  >= 0x1000000 ) byte_val |= 0x0c;  else
-      if ( stretch.dword  >= 0x10000   ) byte_val |= 0x08;  else
-      if ( stretch.dword  >= 0x100     ) byte_val |= 0x04;
-    }
-
-    found.buffer[found.offset++] =  byte_val;
-
-    if ( verbosity > 1 )
-      fprintf(stderr, "block %i  control %x  stretch %i  size %i  to %i  from %i\n",
-              block, byte_val, stretch,
-              found.pair[block].size,
-              found.pair[block].to,
-              found.pair[block].from);
-
-    if ( origin.dword  >=  0x1000000 ) found.buffer[found.offset++] = origin.byte.b3;
-    if ( origin.dword  >=  0x10000   ) found.buffer[found.offset++] = origin.byte.b2;
-    if ( origin.dword  >=  0x100     ) found.buffer[found.offset++] = origin.byte.b1;
-                                       found.buffer[found.offset++] = origin.byte.b0;
-
-    if ( size.dword    >=  0x1000000 ) found.buffer[found.offset++] = size.byte.b3;
-    if ( size.dword    >=  0x10000   ) found.buffer[found.offset++] = size.byte.b2;
-    if ( size.dword    >=  0x100     ) found.buffer[found.offset++] = size.byte.b1;
-                                       found.buffer[found.offset++] = size.byte.b0;
-
-    if (   stretch.dword  >   0 ) {
-      if ( stretch.dword  >=  0x1000000 ) found.buffer[found.offset++] = stretch.byte.b3;
-      if ( stretch.dword  >=  0x10000   ) found.buffer[found.offset++] = stretch.byte.b2;
-      if ( stretch.dword  >=  0x100     ) found.buffer[found.offset++] = stretch.byte.b1;
-                                          found.buffer[found.offset++] = stretch.byte.b0;
-    }
   }
 
          unmatched_size.dword   =  0;
@@ -181,9 +108,6 @@ fprintf(stderr,"blk %i  to %i  from %i  size %i\n",
      to.offset                  =  0;
 
   for ( block = 0; block < found.count ; block++ ) {
-
-/* *** */
-    if ( found.pair[block].size.dword == 1 )  continue;
 
     stretch.dword    =  found.pair[block].to.dword  -  to.offset;
 
@@ -220,16 +144,18 @@ void  make_sdelta(INPUT_BUF *from_ibuf, INPUT_BUF *to_ibuf)  {
   TO			to;
   MATCH			match, potential;
   FOUND			found;
-  unsigned int		count, line, total, where, ceiling;
+  unsigned int		count, line, total, where, ceiling, basement;
   int                   limit;
   u_int16_t		tag;
   SHA_CTX		ctx;
   unsigned char		*here, *there;
   QWORD			*from_q, *to_q;
-/*
+  int			resize;
+
+/**/
   u_int64_t		sizing=0;
   u_int64_t		leaping=0;
-*/
+/**/
 
   from.buffer = from_ibuf->buf;
   to.buffer   =   to_ibuf->buf;
@@ -258,7 +184,8 @@ void  make_sdelta(INPUT_BUF *from_ibuf, INPUT_BUF *to_ibuf)  {
   to.offset                 =  0;
   found.pair[0].to.dword    =
   found.pair[0].from.dword  =
-  found.pair[0].size.dword  = 0;
+  found.pair[0].size.dword  =  0;
+  basement                  =  0;
 
   while  ( to.ceiling > to.offset )  {
 
@@ -268,9 +195,9 @@ void  make_sdelta(INPUT_BUF *from_ibuf, INPUT_BUF *to_ibuf)  {
       ceiling     =  from.ordereds;
       ceiling--;
 
-/*
+/**/
 leaping++;
-*/
+/**/
 
       while ( ceiling >= 0x800000 )
       leap(0x800000);
@@ -307,13 +234,15 @@ leaping++;
 
       match.blocks   =  1;
       match.total    =  0;
+      match.from     =  from.size;
          to.limit    =  to.size - to.offset;
+      resize         =  0;
 
       while( *(u_int64_t *)(  to.buffer +   to.offset) ==
              *(u_int64_t *)(from.buffer + from.offset) ) {
-/*
+/**/
 sizing++;
-*/
+/**/
 
         count             =  1;
         from.limit        =  from.size - from.offset;
@@ -335,29 +264,36 @@ sizing++;
         potential.head   =
         potential.tail   = 0;
 
-        if ( found.count > 0 ) {
-           here =   to.buffer +   to.offset - 1;
-          there = from.buffer + from.offset - 1;
-          while ( here[-potential.head] == there[-potential.head] )
-            potential.head++;
-        }
+        limit = MIN( from.offset,
+                       to.offset - basement );
+         here =        to.offset + to.buffer;     here--;
+        there =      from.offset + from.buffer;  there--;
+        while ( ( limit                 >  potential.head         ) &&
+                ( here[-potential.head] == there[-potential.head] ) )
+          potential.head++;
 
-        limit=MIN( from.size   - from.offset - potential.size,
-                     to.size   -   to.offset - potential.size );
-         here =      to.buffer +   to.offset + potential.size;
-        there =    from.buffer + from.offset + potential.size;
+        limit=MIN( from.size   - from.offset,
+                     to.size   -   to.offset);
+        limit  -=  potential.size;
+         here   =  potential.size +   to.buffer +   to.offset;
+        there   =  potential.size + from.buffer + from.offset;
         while ( ( limit                >        potential.tail  ) &&
                 ( here[potential.tail] == there[potential.tail] ) )
           potential.tail++;
 
         potential.total =  potential.size + potential.head + potential.tail;
 
-        if ( potential.total > match.total ) {
-          match.blocks       =                potential.blocks;
-          match.to_offset    =    to.offset - potential.head;
-          match.from_offset  =  from.offset - potential.head;
-          match.total        =                potential.total;
-        } else break;
+        if ( ( potential.total < match.total ) ||
+             ( potential.total < resize      ) )  break;
+
+        if ( ( potential.total  !=  match.total ) ||
+             ( from.offset - potential.head < match.from ) ) {
+          match.blocks  =                     potential.blocks;
+          match.to      =    to.offset      - potential.head;
+          match.from    =  from.offset      - potential.head;
+          match.total   =                     potential.total;
+                 resize =  0;
+        }  else  resize++;
 
         if ( ( match.total < 8192          ) &&
              ( ++where     < from.ordereds ) )
@@ -366,17 +302,19 @@ sizing++;
 
       }  /* finished finding matches for to.block */
 
-      if ( match.total > 0x10 ) {
-        found.pair[found.count].to.dword      =  match.to_offset;
-        found.pair[found.count].from.dword    =  match.from_offset;
+      if ( match.total > 0x0c ) {
+        found.pair[found.count].to.dword      =  match.to;
+        found.pair[found.count].from.dword    =  match.from;
         found.pair[found.count].size.dword    =  match.total;
+        basement                              =  match.total + 
+                                                 match.to;
 /*
 fprintf(stderr,"mat %i to %i from %i tot %i\n", 
-        found.count, match.to_offset, 
-        match.from_offset, match.total);
+        found.count, match.to, 
+        match.from, match.total);
 */
         found.count++;
-        to.offset = match.to_offset + match.total - 1;
+        to.offset = match.to + match.total - 1;
 
               next_offset();
       } else  next_offset();
@@ -393,10 +331,10 @@ fprintf(stderr,"mat %i to %i from %i tot %i\n",
   if ( verbosity > 0 ) {
     fprintf(stderr, "Statistics for sdelta generation.\n");
     fprintf(stderr, "Blocks in from               %i\n", from.ordereds);
-/*
+/**/
     fprintf(stderr, "Leaping                      %lli\n", leaping);
     fprintf(stderr, "Sizing                       %lli\n", sizing);
-*/
+/**/
     total=0;
     for ( where = 0; where < found.count; where++)
       total += found.pair[where].size.dword;
@@ -418,7 +356,6 @@ void   make_to(INPUT_BUF *from_ibuf, INPUT_BUF *found_ibuf)  {
   TO			to;
   DWORD			*dwp, stretch;
   unsigned char		control;
-  u_int32_t		line;
   u_int32_t		block;
   u_int32_t		size;
   SHA_CTX		ctx;
@@ -448,38 +385,7 @@ void   make_to(INPUT_BUF *from_ibuf, INPUT_BUF *found_ibuf)  {
   dwp->byte.b1       =  found.buffer[found.offset++];
   dwp->byte.b0       =  found.buffer[found.offset++];
   found.count        =  0;
-  line               =  0;
-
-  size          =  1;
-  while ( size !=  0 ) {
-
-    control     =  found.buffer[found.offset++];
-
-    switch ( control & 0xc0 ) {
-      case 0xc0: found.offset += 4;  break;
-      case 0x80: found.offset += 3;  break;
-      case 0x40: found.offset += 2;  break;
-      default:   found.offset++;     break;
-    }
-
-    switch ( control & 0x30 ) {
-      case 0x30: found.offset += 4;  break;
-      case 0x20: found.offset += 3;  break;
-      case 0x10: found.offset += 2;  break;
-      default:   size = found.buffer[found.offset++]; break;
-    }
-
-    if  ( ( control & 2 )  == 2 ) {
-      switch ( control & 0x0c ) {
-        case 0x0c: found.offset += 4;  break;
-        case 0x08: found.offset += 3;  break;
-        case 0x04: found.offset += 2;  break;
-        default:   found.offset++;     break;
-      }
-    }
-    found.count++;
-  };
-
+  to.offset          =  0;
 
   found.pair         = (PAIR *) temp.current;
   found.count        =  0;
@@ -489,83 +395,28 @@ void   make_to(INPUT_BUF *from_ibuf, INPUT_BUF *found_ibuf)  {
   size          =  1;
   while ( size !=  0 ) {
 
-    control     =  found.buffer[found.offset++];
+    stretch.byte.b3 = found.buffer[found.offset++];
+    stretch.byte.b2 = found.buffer[found.offset++];
+    stretch.byte.b1 = found.buffer[found.offset++];
+    stretch.byte.b0 = found.buffer[found.offset++];
 
-    found.pair[found.count].from.dword  =  0;
+    to.offset += stretch.dword;
 
-    switch ( control & 0xc0 ) {
-      case 0xc0 : found.pair[found.count].from.byte.b3 = found.buffer[found.offset++];
-                  found.pair[found.count].from.byte.b2 = found.buffer[found.offset++];
-                  found.pair[found.count].from.byte.b1 = found.buffer[found.offset++];
-                  found.pair[found.count].from.byte.b0 = found.buffer[found.offset++];
-                  break;
-      case 0x80:  found.pair[found.count].from.byte.b2 = found.buffer[found.offset++];
-                  found.pair[found.count].from.byte.b1 = found.buffer[found.offset++];
-                  found.pair[found.count].from.byte.b0 = found.buffer[found.offset++];
-                  break;
-      case 0x40:  found.pair[found.count].from.byte.b1 = found.buffer[found.offset++];
-                  found.pair[found.count].from.byte.b0 = found.buffer[found.offset++];
-                  break;
-      default:    found.pair[found.count].from.byte.b0 = found.buffer[found.offset++];
-    }
+    found.pair[found.count].size.byte.b3 = found.buffer[found.offset++];
+    found.pair[found.count].size.byte.b2 = found.buffer[found.offset++];
+    found.pair[found.count].size.byte.b1 = found.buffer[found.offset++];
+    found.pair[found.count].size.byte.b0 = found.buffer[found.offset++];
 
-    found.pair[found.count].size.dword  =  0;
-    switch ( control & 0x30 ) {
-      case 0x30 : found.pair[found.count].size.byte.b3 = found.buffer[found.offset++];
-                  found.pair[found.count].size.byte.b2 = found.buffer[found.offset++];
-                  found.pair[found.count].size.byte.b1 = found.buffer[found.offset++];
-                  found.pair[found.count].size.byte.b0 = found.buffer[found.offset++];
-                  break;
-      case 0x20:  found.pair[found.count].size.byte.b2 = found.buffer[found.offset++];
-                  found.pair[found.count].size.byte.b1 = found.buffer[found.offset++];
-                  found.pair[found.count].size.byte.b0 = found.buffer[found.offset++];
-                  break;
-      case 0x10:  found.pair[found.count].size.byte.b1 = found.buffer[found.offset++];
-                  found.pair[found.count].size.byte.b0 = found.buffer[found.offset++];
-                  break;
-      default:    found.pair[found.count].size.byte.b0 = found.buffer[found.offset++];
-    }
+    found.pair[found.count].from.byte.b3 = found.buffer[found.offset++];
+    found.pair[found.count].from.byte.b2 = found.buffer[found.offset++];
+    found.pair[found.count].from.byte.b1 = found.buffer[found.offset++];
+    found.pair[found.count].from.byte.b0 = found.buffer[found.offset++];
 
-    size  =  found.pair[found.count].size.dword;
-
-    if  ( ( control & 2 )  == 2 ) {
-      stretch.dword  =  0;
-      switch ( control & 0x0c ) {
-        case 0x0c : stretch.byte.b3 = found.buffer[found.offset++];
-                    stretch.byte.b2 = found.buffer[found.offset++];
-                    stretch.byte.b1 = found.buffer[found.offset++];
-                    stretch.byte.b0 = found.buffer[found.offset++];
-                    break;
-        case 0x08:  stretch.byte.b2 = found.buffer[found.offset++];
-                    stretch.byte.b1 = found.buffer[found.offset++];
-                    stretch.byte.b0 = found.buffer[found.offset++];
-                    break;
-        case 0x04:  stretch.byte.b1 = found.buffer[found.offset++];
-                    stretch.byte.b0 = found.buffer[found.offset++];
-                    break;
-        default:    stretch.byte.b0 = found.buffer[found.offset++];
-      }
-      line += stretch.dword;
-    }
-
-    if ( verbosity > 1 )
-      fprintf(stderr, "block %i  control %x  stretch %i  to %i  count %i  from %i\n",
-              found.count,
-              control,
-              stretch,
-              line,
-              found.pair[found.count].size,
-              found.pair[found.count].from);
-
-            found.pair[found.count  ].to.dword  = line;
-    line += found.pair[found.count++].size.dword;
+    found.pair[found.count].to.dword     = to.offset;
+    to.offset +=  size =  found.pair[found.count++].size.dword;
 
   };
 
-/* Realloc no longer required since precisely sized based upon count */
-/*
-  found.pair    =  realloc( found.pair, sizeof(PAIR) * found.count );
-*/
   temp.current += sizeof(PAIR) * found.count;
 
   dwp           =  (DWORD *)&delta.size;
@@ -606,6 +457,7 @@ void   make_to(INPUT_BUF *from_ibuf, INPUT_BUF *found_ibuf)  {
   delta.offset  =  0;
 
   for ( block = 0; block < found.count; block++ ) {
+
     stretch.dword = found.pair[block].to.dword - to.offset;
     if ( stretch.dword > 0 ) {
       write( 1, delta.buffer + delta.offset, stretch.dword );
@@ -616,7 +468,8 @@ void   make_to(INPUT_BUF *from_ibuf, INPUT_BUF *found_ibuf)  {
     size        = found.pair[block].size.dword;
     from.offset = found.pair[block].from.dword;
     write( 1, from.buffer + from.offset, size );
-    to.offset  += found.pair[block].size.dword;
+
+    to.offset  += size;
   }
 
   if (from_ibuf)

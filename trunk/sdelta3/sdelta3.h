@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <netinet/in.h>
 #include "blocks.h"
 
 /* SHA1 digest */
@@ -25,7 +26,7 @@ typedef struct TO {
 } TO;
 
 typedef struct MATCH {
-  u_int32_t	from_offset, to_offset, blocks, size, head, tail, total;
+  u_int32_t	from, to, blocks, size, head, tail, total;
 } MATCH;
 
 
