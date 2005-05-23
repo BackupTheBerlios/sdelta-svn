@@ -1,0 +1,14 @@
+sdelta requires the mhash library 
+for generating sha1sum message digest.
+mhash is available from
+http://mhash.sourceforge.net
+sdelta has been tested with mhash version 0.9.1
+although newer or older versions may work fine.
+
+Only on FreeBSD is the dlmalloc library required.
+
+Export to the environment desired CFLAGS and LDFLAGS.
+
+For Linux and Solaris: $ make
+For FreeBSD:           $ make bsd
+For All:               $ make install

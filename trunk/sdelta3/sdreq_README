@@ -1,0 +1,268 @@
+sdreq is a tool for requesting and applying sdelta patches
+copyright by Kyle Sallee 2005, all rights reserved.
+sdreq is very simple and designed to be invoked by
+command line and/or scripts to accomplish it's task
+without any human interaction.
+
+To use sdreq you will require installed:
+bash, bzip2 curl, coreutils, dialog, find, grep, gzip, p7zip, and sed.
+
+bzip2 p7zip and gzip are compression programs.
+curl is the download agent.
+The rest are utilities used by the sd and sdreq shell script.
+
+p7zip is a compression program that can frequently produce
+tarballs that are compressed 30% smaller than bzip2.
+Whe the Public Patch Repository provides tarballs and
+patches for download those tarballs and patches may be
+compressed with 7za from p7zip or bzip2.
+Therefore, you must have both installed to 
+have tarballs and patches decompressed.
+
+The first time sdreq is run it will bring you to a configuration menu.
+The configuration menu allows certain features
+to be enabled or disabled for all runs.
+The two features currently supported are
+email notification and sdelta patch upload.
+Requested sdelta patches are typically 
+available seconds after the request is received.
+However when they are not immediately available
+you may find it useful for the service to send an 
+email to notify when the patches are ready for download.
+Even better than that you can request that the
+service email the patches to your ftp server
+so that they need not be downloaded.
+Should you ever want to re-run the configuration
+invoke sdreq with parameter config.
+
+After configuration is run sdreq will create the file:
+~/.sdreq/config
+
+and directories:
+~/.sdreq/have		contains source tarballs that you have
+~/.sdreq/log		contains logs for all sdelta requests
+~/.sdreq/sd		contains download sdelta patches
+~/.sdreq/tmp		contains temporary files created while sdreq runs
+~/.sdreq/waiting	contains desired but empty sdelta patch files
+~/.sdreq/want		contains empty source tarballs that are wanted
+
+The first useful one time preparation may be to delete
+~/.sdreq/have and symbolic link it to where you keep source tarballs.
+For example if you store sources in /var/cache/source you might issue:
+$ rm  -f                      ~/.sdreq/have
+$ ln  -s  /var/cache/sources  ~/.sdreq/have
+Sources tarballs may be 7za, bzip2, gzip or uncompressed.
+They may be directly within that directory or within sub directories.
+
+sdreq will now be able to figure out what you have.
+Still it needs to be told what you want.
+
+The want directory and have directory can be the same if
+you want the new sources stored where the old sources are:
+For this example I will assume that you issue the commands:
+
+$ rm  -f                      ~/.sdreq/want
+$ ln  -s  /var/cache/sources  ~/.sdreq/want
+
+Let us assume that you have:
+dialog/1.0-20041222/dialog-1.0-20041222.tar.bz2
+And you want:
+dialog/1.0-20050116/dialog-1.0-20050116.tar.bz2
+
+issue:
+
+$ mkdir  -p  ~/.sdreq/want/dialog/1.0-20050116
+$ touch      ~/.sdreq/want/dialog/1.0-20050116/dialog-1.0-20050116.tar.bz2
+or
+$ touch      ~/.sdreq/want/dialog-1.0-20050116.tar.bz2
+
+Now there is an empty file within the want directory.
+Make as many empty files with the names of the source
+tarballs that you want.
+
+sdreq will now know what you want.
+sdreq should be able to figure out 
+what sdelta to request if you have
+a previous source version available.
+Now make the request:
+$ sdreq  want
+It just uploaded a list of the sdelta patches
+that you will require to the ibiblio.org/sdelta server.
+
+Assuming the sdelta patches are not uploaded to your FTP server,
+you may want to wait a while before trying to retrieve them.
+Once you receive an email from sdelta@ibiblio.org you will
+know they are ready for pickup.
+If you elect not to receive email notification then you will
+need to wait a while before attempting to download the patches.
+Once you are ready to download them issue:
+$ sdreq  download
+
+The required and available patches should now be in ~/sdreq/sd
+Now you need only to apply the patches to gain the new sources
+by issuing the command:
+$ sdreq  apply
+
+The above command will remove patches from ~/sdreq/sd
+so if you want them saved you should copy or hard link
+the content of ~/sdreq/sd elsewhere before applying.
+Where once empty files existed within ~/sdreq/want
+now there are the source tarballs and for far less
+bytes downloaded than full source tarballs.
+
+In review the 4 step process for gaining new source tarballs is:
+1.  Touch the file names for the sources that you want.
+2.  Issue:  sdreq  want
+3.  Issue:  sdreq  download
+4.  Issue:  sdreq  apply
+
+
+			Q and A
+
+The following Q and A, questions and answers, is useful
+for illumining advanced techniques and circumventing
+common problems with this simplistic approach to
+upgrading source tarballs.
+
+
+Q. Where does ibiblio.org/sdelta get sdelta patches from?
+
+A. It makes them.
+
+
+Q. Where does ibiblio.org/sdelta get sources from?
+
+A. It has an approved and reviewed list of servers
+   that it will download sources from as necessary.
+
+
+Q. What if the source tarball I want is not hosted on those servers?
+
+A. Then you will not be able to get a free sdelta upgrade patch for it.
+
+
+Q. Can  the want source tarball be compressed differently
+   than the have source tarball?
+
+A. The generated have source tarballs can be compressed or uncompressed.
+   The type of compression applied is determined by the file extension.
+   Ending in .bz2 would apply bzip2 compression.
+   Ending in .tar would apply no    compression.
+
+
+Q. When can I remove the content of ~/.sdreq/tmp?
+
+A. While unnecessary to clean ~/.sdreq/tmp you may do so
+   before invoking sdreq want, but do not clean it 
+   in between want download and apply.
+   The directories are not created if removed.
+   If you remove ~/sdreq/tmp then you broke it.
+   Fix it.
+
+
+Q. A file I want can not have a sdelta patch generated for it.
+   Should I remove the empty file in the want directory?
+
+A. Yes.  However if older than 14 days it will be removed
+   in order to keep ibiblio.org/sdelta from forever trying
+   to create a patch that it can not create each time your
+   box executes sdreq  want
+
+
+Q. sdreq sometimes times out or waits forever while downloading patches.
+
+A. sdreq uses curl as it's download agent.
+   The behavior of curl can be adjusted using
+   a ~/.curlrc file.
+   The command man curl will provide useful documentation.
+   The  --speed-limit and --speed-time are useful for causing
+   curl to abort futile transfers.
+
+
+Q. I am having more aborts than successes with curl downloading.
+
+A. Try adding more than one line in the script that invokes: sdreq download
+   That way previously broken file transfers can be resumed.
+
+
+Q. I wanted to upgrade from bash-3.0.tar.bz2 to bash-3.1.tar.bz2
+   but sdreq choose bash-completition-20050121.tar.bz2 for the have file.
+   That is not right.  How can I make it work properly.
+
+A. sdreq will order potential matches of from files by name and time.
+   sdreq does not know that "completition-20050121" is not a version
+   number for bash and not an entirely different source tarball.
+   However if you touch the have source tarball bash-3.0.tar.bz2
+   it will become newer than bash-completition-20050121 and be
+   chosen instead of it for the bash-3.0.tar.bz2 to
+   bash-3.1.tar.bz2 upgrade.
+
+
+Q. I am a distribution maintainer.
+   I want my distribution to provide software upgrade patches.
+   How can I use ibiblio.org/sdelta and sdreq to accomplish this?
+
+A. First, have a ftp server configured to receive uploads of sdelta patches.
+   Your servers will host downloads of upgrade patches.
+   Now modify the client download to check for patches.
+   If a patch is available download the patch and invoke
+   sd to generate the new source tarball from the old
+   source tarball and patch.
+   Yes it is very easy to accomplish within a few hours or less.
+
+
+Q. May I add servers to the list of trusted software hosts?
+
+A. Email sdelta@ibiblio.org and it will be examined.
+
+
+Q. May I have upgrade patches for .rpm, .deb, other precompiled
+   binary package, .zip, or files that are not compressed tarballs?
+
+A. sdelta upgrade patches can be generated by the same script
+   that generates packages by adding one or a few more lines.
+   Distributions that generate packages already
+   have the old and new packages at their site.
+   Therefore, they should generate and host upgrade patches.
+
+   Since most pre-compiled binary distros provide only
+   security updates and not version updates for software.
+   You will be wasting most of your bandwidth when you
+   eventually download a new Install/Rescue ISO9660.
+   Ask them to provide a sdelta or xdelta upgrade patch for it.
+
+
+Q. My favorite pre-compiled package distro will not provide sdelta patches.
+   What can I do?
+
+A. They are wasting their money for hosting more bandwidth
+   than required if they supplied upgrade patches.
+   They are wasting your time by downloading full packages.
+
+   Switch to a source based distro like Sorcerer.
+   Sorcerer installs software without unnecessary
+   downloading of sources and without unnecessary
+   compilation of object files.
+   Sorcerer boxes download sdelta upgrade patches.
+   Sorcerer boxes cache previously compiled object
+   files which can often be re-used during updates.
+   Sorcerer gives you the full power of source for
+   a minimal cost in CPU cycles and downloading.
+   One Sorcerer box can compile and supply all 
+   upgrades for all the similarly configured boxes 
+   on your network gaining the power of source at 
+   speeds faster than pre-compiled distros can offer.
+
+
+Q. May I write, use, and distribute my own client for ibiblio.org/sdelta?
+
+A. If your client operates in a sane fashion according
+   to the implied rules of sdelta patch generation then yes.
+   ibiblio.org/sdelta's service is monitored.
+   Anyone or anything doing something odd or strange
+   will receive a warning if possible and then be
+   disabled or denied service if the problem persists.
+
+   You may not copy any code from sdreq to use in your client.
+   sdreq is under the Sorcerer Public License.
+   Please email improvements or suggestions to sdelta@ibiblio.org

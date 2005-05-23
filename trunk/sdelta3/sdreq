@@ -1,0 +1,405 @@
+#!/bin/bash
+
+###############################################################
+# sdreq is copyright 2005 by Kyle Sallee, All rights reserved #
+# sdreq is distributed under the SPL version 1.1              #
+###############################################################
+
+load_config()  {
+  if    [     -x  ${SDREQ_CONFIG:=~/.sdreq/config}  ]
+  then         .  ${SDREQ_CONFIG}
+        SDREQ_DIR=${SDREQ_CONFIG%/*}
+  else  SDREQ_DIR=${SDREQ_CONFIG%/*}
+    mkdir  -p     ${SDREQ_DIR}/have       \
+                  ${SDREQ_DIR}/log        \
+                  ${SDREQ_DIR}/receiving  \
+                  ${SDREQ_DIR}/received   \
+                  ${SDREQ_DIR}/tmp        \
+                  ${SDREQ_DIR}/want       \
+                  ${SDREQ_DIR}/waiting
+    run_config
+    exit  1
+  fi
+}
+
+
+save_config()  {
+  (
+    echo  " EMAIL=$EMAIL"
+    echo  "   FTP=$FTP_NAME"
+    echo  "NOTIFY=$NOTIFY"
+    echo  "UPLOAD=$UPLOAD"
+  )  >        $SDREQ_CONFIG
+  chmod  a+x  $SDREQ_CONFIG
+}
+
+
+front_flip()  {
+  sed  -r  "s:^X11R6(.*)(-src[1-9]).tar:X11R6\2\1.tar:
+            s:^XFree86(-.*)(-src-[1-9]).tar:XFree86\2\1.tar:
+            s:^TORCS(-.*)(-src.*).tar:TORCS\2\1.tar:"
+}
+
+
+back_flip()  {
+  sed  -r  "s:^X11R6(-src[1-9])(.*).tar:X11R6\2\1.tar:
+            s:^XFree86(-src-[1-9])(-.*).tar:XFree86\2\1.tar:
+            s:^TORCS(-src.*)(-.*).tar:TORCS\2\1.tar:"
+}
+
+
+not()  {  if  $1;  then  echo  "false";  else  echo  "true";  fi  }
+
+
+inputbox()  {
+  local  OK  PLEASE
+      OK=$"Done"
+  PLEASE=$"Please enter a new value for"
+
+  $DIALOG  --ok-label      "$OK"  \
+           --no-cancel            \
+           --default-item  "$1"   \
+           --inputbox             \
+           "$3  $PLEASE $1:"      \
+           0 0 "$2"
+}
+
+
+config_menu()  {
+  local  COMMAND  OK  CANCEL  HELP
+
+  NOTIFY="${NOTIFY:-false}"
+  UPLOAD="${UPLOAD:-false}"
+   EMAIL="${EMAIL:-$LOGNAME$HOSTNAME}"
+
+  while
+         OK=$"Select"
+     CANCEL=$"Done"
+       HELP=$"Please configure how sdreq should function
+Upon completion of patch generation cromwell@berlios.de 
+can send an email notifying pick up is ready.
+Patches can also be uploaded directly to a FTP server."
+    E_HELP=$"Email address.           Example: $LOGNAME@$HOSTNAME"
+    F_HELP=$"FTP upload information.  Example: ftp://$LOGNAME:password@ftp.mydom.com/pub/uploads"
+    N_HELP=$"Receive an email upon sdelta generation completion?"
+    U_HELP=$"Upload sdelta patches to your ftp server?"
+    COMMAND=$(  $DIALOG  --title        $"Configuration Menu"  \
+                         --item-help                \
+                         --ok-label      "$OK"      \
+                         --cancel-label  "$CANCEL"  \
+                         --menu          "$HELP"    \
+                         16 60 6                    \
+                         "EMAIL"         "$EMAIL"        "$E_HELP"  \
+                         "FTP"           "$FTP"          "$F_HELP"  \
+                         "NOTIFY"        "$NOTIFY"       "$N_HELP"  \
+                         "UPLOAD"        "$UPLOAD"       "$U_HELP"  )
+
+  do
+    case  $COMMAND  in
+      NOTIFY)    NOTIFY=$(  not  "$NOTIFY"  )  ;;
+      UPLOAD)    UPLOAD=$(  not  "$UPLOAD"  )  ;;
+           *)  declare  $COMMAND="$(  inputbox  "$COMMAND"  "${!COMMAND}"  ""  )"
+    esac
+  done
+  save_config
+}
+
+
+config_text()  {
+  local  COMMAND  OK  CANCEL  HELP
+
+    HELP=$"Please configure how sdreq should function
+Upon completion of patch generation cromwell@berlios.de
+can send an email notifying pick up is ready.
+Patches can also be uploaded directly to a FTP server."
+  E_HELP=$"Email address.           Example: $LOGNAME@$HOSTNAME"
+  F_HELP=$"FTP upload information.  Example: ftp://$LOGNAME:password@ftp.mydom.com/pub/uploads"
+  N_HELP=$"Receive an email upon sdelta generation completion?"
+  U_HELP=$"Upload sdelta patches to your ftp server?"
+
+  echo      "$HELP"    1>&2
+  echo      "$N_HELP"  1>&2
+  read  -p  "Please enter true or false: "  NOTIFY
+  echo      "$E_HELP"  1>&2
+  read                                      EMAIL
+  echo      "$U_HELP"  1>&2
+  read  -p  "Please enter true or false: "  UPLOAD
+  echo      "$F_HELP"
+  read                                      FTP
+
+  NOTIFY="${NOTIFY:-false}"
+  UPLOAD="${UPLOAD:-false}"
+   EMAIL="${EMAIL:-$LOGNAME$HOSTNAME}"
+  save_config
+}
+
+
+run_config()  {
+  if    [  -f  /usr/bin/dialog  ]  &&
+        [  -x  /usr/bin/dialog  ]  &&
+        !      /usr/bin/dialog  --version  2>&1  |  grep  -q  "0\.[3-4]"
+  then  config_menu
+  else  config_text
+  fi
+}
+
+
+help() {
+  echo  $"$COPYRIGHT"
+  echo
+  echo  $"Usage: sdreq [command]"
+  echo  $"Commands:"
+  echo  $"want		request sdelta patches from http://sdelta.berlios.de/ppr"
+  echo  $"download	retrieve previously requested sdelta patches"
+  echo  $"new		apply patches to create new files"
+  echo  $"config		reconfigure sdreq"
+  echo
+  echo  $"Preparation is required before executing sdreq want."
+  echo  $"Please read /usr/share/sdelta/sdreq_README first."
+}
+
+
+# list()        { find $1 -follow -type f -not -empty -printf "%P\n"; }
+# list_empty()  { find $1 -follow -type f      -empty -printf "%P\n"; }
+
+list()        { find $1 -follow -type f -not -empty | sed "s:^$1::"; }
+list_empty()  { find $1 -follow -type f      -empty | sed "s:^$1::"; }
+
+tars()  {
+  sed  "s:\.tar.7z$:.tar:
+        s:\.tar.bz2$:.tar:
+        s:\.tar.gz$:.tar:
+        s:\.tgz$:.tar:"  |
+  sort  -u
+}
+
+
+basenames()  {  sed  "s:.*[/]::"  |  sort  -u;  }
+
+
+post()  {
+ curl  -m 60  -F "request=@$1;type=text/plain"   \
+       http://sdelta.berlios.de/ppr/request.php  |
+ grep  -v "pre\>"
+}
+
+
+request_patches()  {
+  LOG=$SDREQ_DIR/log/$(date  "+%Y-%m-%d-%H:%M" )
+
+  (
+    if [ "$NOTIFY" == "true" ]; then echo "NOTIFY	$EMAIL"; fi
+    if [ "$UPLOAD" == "true" ]; then echo "UPLOAD	$FTP"; fi
+
+    while  read
+    do     touch  "$SDREQ_DIR/waiting/$REPLY"
+           echo                      "$REPLY"
+    done
+  )  >>  $LOG
+
+  if    grep  -q  "\.tar\.sd$\|\.tar$"  $LOG  2>/dev/null
+  then  post  $LOG
+  fi
+}
+
+
+match()  {
+  local  BEST  FILE  FOUND  LEN  START  NEW
+
+  LEN="${#1}"
+  (( LEN = LEN - 4  ))
+
+  START="$(  echo  "$1"  |  front_flip  )"
+  START="${START:0:$LEN}"
+
+  while
+    FOUND="$(  grep  "^$START"  $SDREQ_DIR/tmp/have.tars  |
+               back_flip  )"
+    [  -z  "$FOUND"  ]  &&  ((  LEN > 2  ))
+  do
+    NEW="${START%.*}"
+    LEN="${#NEW}"
+
+    if    [  "$NEW"  ==  "$START"  ]
+    then  (( LEN = LEN - 1 ))
+          START="${START:0:$LEN}"
+    else  START="$NEW"
+    fi
+  done
+
+  [  -n  "$FOUND"  ]  &&
+  echo   "$FOUND"  |
+  while  read
+  do     grep  "$REPLY"  $SDREQ_DIR/tmp/have.files
+  done  |
+  while  read;  do
+    if    [  -z  "$BEST"  ]  ||
+          [ $SDREQ_DIR/have/$REPLY  -nt  $SDREQ_DIR/have/$BEST  ]
+    then  BEST="$REPLY"
+          echo "$REPLY"
+    fi
+  done  |  tail  -n 1
+
+}
+
+
+sdelta_names()  {
+  local  BEST  REPLY
+  while  read;  do
+    BEST="$(  match  "$REPLY"  )"
+    if    [  -n          "$BEST"  ]
+    then  echo  "$( echo  $BEST  |
+                    tars         |
+                    basenames    )-$REPLY.sd"
+    else  echo  "$REPLY"
+    fi
+  done
+}
+
+
+want() {
+  list           $SDREQ_DIR/have/           |
+  tee            $SDREQ_DIR/tmp/have.files  |
+  basenames                                 |
+  tars                                      |
+  front_flip  >  $SDREQ_DIR/tmp/have.tars
+
+  list_empty  $SDREQ_DIR/want/  |
+  basenames                     |
+  tars                          |
+  sdelta_names                  |
+  request_patches
+}
+
+
+clean()  {
+  find   $1  -follow  -type f  -empty  -mtime +$2  |
+  xargs  -l16  rm  -f
+}
+
+
+transfer()  {
+  echo  "Downloading  $1"
+  if    curl  -C -  -L  -O  --connect-timeout 120  "$1"
+  then  mv  "$SDREQ_DIR/receiving/${1##*/}"  \
+            "$SDREQ_DIR/received/"
+  else  false
+  fi
+}
+
+
+available()  {
+  curl  -f  -I  -L  -m 60  "$1"  2>&1  |  grep  -q  "Content-Length:"
+}
+
+
+download()  {
+  local  SP ST URL
+
+#  SP="http://sdelta.berlios.de/ppr/files/patches"
+#  ST="http://sdelta.berlios.de/ppr/files/sources"
+
+  SP="ftp://ftp.berlios.de/pub/sdelta/patches"
+  ST="ftp://ftp.berlios.de/pub/sdelta/sources"
+
+  [      -d   $SDREQ_DIR/received  ]  ||
+  mkdir  -p   $SDREQ_DIR/received
+
+  [      -d   $SDREQ_DIR/receiving  ]  ||
+  mkdir  -p   $SDREQ_DIR/receiving
+  cd          $SDREQ_DIR/receiving
+
+  list_empty  $SDREQ_DIR/waiting/  |
+  while  read;  do
+    if    [  "${REPLY:0-4}"  ==  ".tar"  ]
+    then  URL="$ST"
+    else  URL="$SP"
+    fi
+    if  !  [  -s   "$SDREQ_DIR/received/$REPLY.7z"   ]  &&
+        !  [  -s   "$SDREQ_DIR/received/$REPLY.bz2"  ]
+    then
+      if    available       "$URL/$REPLY.7z"
+      then  transfer        "$URL/$REPLY.7z"
+      elif  available       "$URL/$REPLY.bz2"
+      then  transfer        "$URL/$REPLY.bz2"
+      else  false
+      fi  &&
+      rm  -f  "$SDREQ_DIR/waiting/$REPLY"
+    fi
+  done
+
+  clean  $SDREQ_DIR/waiting  14
+}
+
+
+apply()  {
+  list   $SDREQ_DIR/received/    |
+  grep  "\.sd\.7z$\|\.sd\.bz2$"  |
+  sed    -r  "s:(.*):\1	\1:
+              s:	(.*)\.tar-(.*)\.tar\.sd\.7z$:	\2.tar:
+              s:	(.*)\.tar-(.*)\.tar\.sd\.bz2$:	\2.tar:"  |
+  while  read  PATCH  TO;  do
+    FROM="$(  match  $TO  )"
+      TO="$(  list_empty   $SDREQ_DIR/want/  |
+              grep   $TO                     |
+              head  -n  1                    )"
+    if    sd      "$SDREQ_DIR/have/$FROM"  "$SDREQ_DIR/received/$PATCH"  \
+                  "$SDREQ_DIR/want/$TO"
+    then  rm  -f                           "$SDREQ_DIR/received/$PATCH"
+    else  rm  -f  "$SDREQ_DIR/want/$TO"    "$SDREQ_DIR/received/$PATCH"
+          touch   "$SDREQ_DIR/want/$TO"
+          false
+    fi
+  done
+
+  list   $SDREQ_DIR/received/      |
+  grep  "\.tar\.7z$\|\.tar\.bz2$"  |
+  while  read;  do
+    sd  translate        "$SDREQ_DIR/received/$REPLY"  \
+                         "$SDREQ_DIR/want/$(
+          list_empty     "$SDREQ_DIR/want/"  |
+          grep   "${REPLY%.*}"               |
+          head  -n  1                        )"  &&
+  rm  -f               "$SDREQ_DIR/received/$REPLY"
+  done
+
+  clean  $SDREQ_DIR/want  14
+}
+
+
+comp_progs()  {
+  if    !  7za  2>/dev/null  |  grep  -q  "";  then
+    echo  "Please install p7zip available from"
+    echo  "http://p7zip.sourceforge.net"
+    echo  "to gain 7za compression."
+    exit  1
+  fi
+}
+
+
+DIALOG="dialog
+--backtitle
+Sdelta Patch Request, Download and Application Tool
+--stdout"
+
+
+
+
+TAB="	"
+ LF="
+"
+
+export  IFS="$TAB$LF"
+
+COPYRIGHT="sdreq by Kyle Sallee Copyright 2005, all rights reserved."
+
+load_config
+comp_progs
+case  $1  in
+      want)  want        ;;
+  download)  download    ;;
+       new)  apply       ;;
+    config)  run_config  ;;
+         *)  help        ;;
+esac
+true

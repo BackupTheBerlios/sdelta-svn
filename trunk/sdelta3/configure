@@ -1,0 +1,8 @@
+#!/bin/bash
+
+echo  "sdelta3 is copyright 2004, 2005 by Kyle Sallee, All Rights Reserved."
+echo  "sdelta3 requires the openssl library available from: http://www.openssl.org"
+echo
+echo  "To build   sdelta3 on Linux or Solaris issue  # make"
+echo  "To build   sdelta3 on FreeBSD          issue  # make  bsd"
+echo  "To install sdelta3                     issue  # make  install"

@@ -1,0 +1,69 @@
+Terse explanation:
+
+sdelta creates and applies patches of uncompressed tarballs.
+sd as a wrapper for sdelta handles compression and decompression
+of files and patches automatically and transparently.
+
+To generate a patch:  $ sd  old_file  new_file    >  patch_file
+To apply    a patch:  $ sd  old_file  patch_file  >  new_file
+
+sd automatically will automatically detect and use
+   .tar.7z,     .tar.bz2,     .tar.gz,  .tgz,
+.sdelta.7z,  .sdelta.bz2,  .sdelta.gz,
+    .sd.7z,      .sd.bz2,      .sd.gz
+
+sd has the following requirements:
+openssl, bash >= 3.0, file >= 4.10, 7za, bzip2, gzip and sdelta 
+programs must be installed and within the PATH for sd to work properly.
+
+The following is an example for creating, 
+transferring and applying a sdelta patch file.
+
+The source      box has files:  gcc-3.4.1.tar.bz2 and  gcc-3.4.3.tar.bz2
+The destination box has only:   gcc-3.4.1.tar.bz2
+
+First, create a sdelta patch file.
+
+$ sd  gcc-3.4.1  gcc-3.4.3  gcc-3.4.1-gcc-3.4.3.sd.bz2
+
+Next, send gcc-3.4.1-gcc-3.4.3.sd.bz2 to the destination box.
+Finally, run sd to apply the patch and generate the desired file.
+
+$ sd  gcc-3.4.1  gcc-3.4.1-gcc-3.4.3  gcc-3.4.3.tar.bz2
+
+Now the destination box has gcc-3.4.3.tar.bz2
+
+What if only the uncompressed tarball is desired instead?
+
+$ sd  gcc-3.4.1  gcc-3.4.1-gcc-3.4.3  gcc-3.4.3
+
+Now sd created gcc.3.4.3.tar
+
+What happens when the from and patch files are swapped?
+
+$ sd  gcc-3.4.1-gcc-3.4.3  gcc-3.4.1  gcc-3.4.3
+
+sd still produces gcc-3.4.3.tar
+
+The first two file parameters may be complete or partial filenames.
+"gcc-3.4.3.tar.bz2"
+"gcc-3.4.3.tar"
+"gcc-3.4.3"
+All three file names above can all be used to 
+indicate the same file even when that file is actually:
+gcc-3.4.3.tar.gz
+However gcc-3.4 will not match gcc-3.4.3*
+
+The third file parameter must be named 
+appropriate for it to be compressed.
+If it ends with .7z .bz2 or .gz
+then it will be compressed with the 
+appropriate compression program.
+Otherwise it will not be compressed.
+The third file name must be complete
+and what is desired because that is
+precisely the filename that sd will output to.
+There is no guessing about what to call the third filename.
+
+Using sd to invoke sdelta should simplify the wielding 
+of compressed tarballs and compressed patch files.
