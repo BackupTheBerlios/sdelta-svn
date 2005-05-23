@@ -9,7 +9,7 @@ void  init_temp(int size) {
     exit(EXIT_FAILURE);
   }
 
-  if  ( ftruncate( fileno(temp.tfp), temp.size ) ==  -1 )  {
+  if  ( ftruncate( fileno(temp.tfp), temp.size = size ) ==  -1 )  {
     perror("Unable to extend temporary file\n");
     exit(EXIT_FAILURE);
   }
