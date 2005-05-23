@@ -223,7 +223,6 @@ void  make_sdelta(INPUT_BUF *from_ibuf, INPUT_BUF *to_ibuf)  {
   unsigned int		count, line, total, where, ceiling;
   int                   limit;
   u_int16_t		tag;
-  QWORD			crc, fcrc;
   SHA_CTX		ctx;
   unsigned char		*here, *there;
   QWORD			*from_q, *to_q;
