@@ -2,7 +2,6 @@
 
 void  init_temp(int size) {
 
-  temp.size  =  size + 0x80000;
   temp.tfp   =  tmpfile();
 
   if  ( temp.tfp == NULL ) {
