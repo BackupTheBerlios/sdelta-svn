@@ -57,7 +57,7 @@ u_int32_t       *block_list(unsigned char *b, int s, u_int32_t *c) {
 
   list =  (u_int32_t *) temp.current;
 
-  max  =  s - 8;
+  max  =  s - SORT_SIZE;
   off  =  \
   blk  =  0;
 
@@ -92,17 +92,6 @@ u_int32_t       *block_list(unsigned char *b, int s, u_int32_t *c) {
          list[blk++] = list[off];
 
   list[blk]     = s;
-
-
-/*
-  Since sorting and comparing of potential matches extends
-  to SORT_SIZE it is important that the block list contain no
-  blocks starts that are within SORT_SIZE of the end of the file.
-*/
-
-  while ( SORT_SIZE > ( list[blk] - list[blk-1] ) )
-    list[--blk] = s;
-
 
   *c            = blk++;
   temp.current += blk * sizeof(u_int32_t);
