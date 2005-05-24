@@ -80,8 +80,10 @@ void	output_sdelta(FOUND found, TO to, FROM from) {
 
   for ( block = 0;  block < found.count ; block++ ) {
 
-    stretch.dword  =  found.pair[block].to.dword - to.offset;
     origin.dword   =  found.pair[block].from.dword;
+    if (origin.dword == 0xffffffff)  continue;
+
+    stretch.dword  =  found.pair[block].to.dword - to.offset;
       size.dword   =  found.pair[block].size.dword;
         to.offset  =  found.pair[block].to.dword + size.dword;
 
@@ -108,6 +110,8 @@ void	output_sdelta(FOUND found, TO to, FROM from) {
      to.offset                  =  0;
 
   for ( block = 0; block < found.count ; block++ ) {
+
+    if (found.pair[block].from.dword == 0xffffffff) continue;
 
     stretch.dword    =  found.pair[block].to.dword  -  to.offset;
 
@@ -144,18 +148,29 @@ void  make_sdelta(INPUT_BUF *from_ibuf, INPUT_BUF *to_ibuf)  {
   TO			to;
   MATCH			match, potential;
   FOUND			found;
-  unsigned int		count, line, total, where, ceiling, basement;
+  unsigned int		count, total, where, ceiling, basement;
   int                   limit;
   u_int16_t		tag;
   SHA_CTX		ctx;
   unsigned char		*here, *there;
   QWORD			*from_q, *to_q;
+  u_int32_t             *froms;
   int			resize;
 
 /**/
   u_int64_t		sizing=0;
   u_int64_t		leaping=0;
 /**/
+
+
+#if __GNUC__ >= 4
+  auto   int compare_dword (const void *v0, const void *v1)  {
+#else
+  static int compare_dword (const void *v0, const void *v1)  {
+#endif
+    return  *(u_int32_t *)v0 - *(u_int32_t *)v1;
+  }
+
 
   from.buffer = from_ibuf->buf;
   to.buffer   =   to_ibuf->buf;
@@ -327,6 +342,34 @@ fprintf(stderr,"mat %i to %i from %i tot %i\n",
   found.pair[found.count++].size.dword  =  0;
 
   temp.current += sizeof(PAIR) * found.count;
+
+
+/* Tripe is discard for high compression to soak */
+
+  if (found.count > 0x400) {
+    froms = (u_int32_t *)temp.current;
+    for(count=0; count < found.count; count++)
+      froms[count]=found.pair[count].from.dword;
+    qsort(froms, found.count, sizeof(u_int32_t), compare_dword);
+    ceiling = found.count / 50;  /* 2% */
+    where=0; limit=0;
+    for(count=0; count < found.count; count++)
+      if (froms[count] == where) limit++;
+      else {
+        if (limit > ceiling) {
+          for (basement=0; basement < found.count; basement++)
+            if ( found.pair[basement].from.dword == where ) {
+                 found.pair[basement].from.dword =  0xffffffff;
+                 if (verbosity > 2)
+                   fprintf(stderr,"Removed match of length %i\n", found.pair[basement].size.dword);
+            }
+          if (verbosity > 1)
+            fprintf(stderr,"Discarded tripe\n");
+        }
+        limit = 0;  where = froms[count];
+      }
+  }
+
 
   if ( verbosity > 0 ) {
     fprintf(stderr, "Statistics for sdelta generation.\n");

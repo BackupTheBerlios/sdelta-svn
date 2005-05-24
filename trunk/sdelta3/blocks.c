@@ -49,10 +49,11 @@ int  trip_byte(char b)  {
 
 }
 
+
 u_int32_t       *block_list(unsigned char *b, int s, u_int32_t *c) {
 
-  u_int32_t     *list;
-  int           off, blk, max;
+  u_int32_t		*list;
+  int			 off, blk, max;
 
   list =  (u_int32_t *) temp.current;
 
@@ -70,6 +71,7 @@ u_int32_t       *block_list(unsigned char *b, int s, u_int32_t *c) {
 
   list[blk]     = s;
 
+
 /*
    Speed is gained by discarding blocks that are
    less than 4 bytes away from the the following block.
@@ -80,6 +82,7 @@ u_int32_t       *block_list(unsigned char *b, int s, u_int32_t *c) {
    However increasing this value above 4 does increase patch size.
 */
 
+
   max        = blk;
   off        = 0;
   blk        = 0;
@@ -89,6 +92,7 @@ u_int32_t       *block_list(unsigned char *b, int s, u_int32_t *c) {
          list[blk++] = list[off];
 
   list[blk]     = s;
+
 
 /*
   Since sorting and comparing of potential matches extends
@@ -104,6 +108,7 @@ u_int32_t       *block_list(unsigned char *b, int s, u_int32_t *c) {
   temp.current += blk * sizeof(u_int32_t);
   return  list;
 }
+
 
 
 void  *order_blocks ( unsigned char *b, u_int32_t *n, int c ) {
