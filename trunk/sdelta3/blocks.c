@@ -84,14 +84,14 @@ u_int32_t       *block_list(unsigned char *b, int s, u_int32_t *c) {
 
 
   max        = blk;
-  off        = 0;
-  blk        = 0;
+  off        = 1;
+  blk        = 1;
 
   for(;max>off;off++)
     if ( list[off+1] - list[off] >= 0x04 )
          list[blk++] = list[off];
 
-  list[blk]     = s;
+  list[blk]     = s - SORT_SIZE;
 
   *c            = blk++;
   temp.current += blk * sizeof(u_int32_t);

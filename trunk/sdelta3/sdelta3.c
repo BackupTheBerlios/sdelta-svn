@@ -346,19 +346,32 @@ fprintf(stderr,"mat %i to %i from %i tot %i\n",
 
 /* Tripe is discard for high compression to soak */
 
+/*
+
+very difficult determining a value for ceiling
+Values between 0.39% and 2% work good,
+but which one works best seems to vary.
+Tripe tends to have a small size.
+However that needs to be enforced otherwise
+some meaty matches could be discarded.
+
+*/
+
+
   if (found.count > 0x400) {
     froms = (u_int32_t *)temp.current;
     for(count=0; count < found.count; count++)
       froms[count]=found.pair[count].from.dword;
     qsort(froms, found.count, sizeof(u_int32_t), compare_dword);
-    ceiling = found.count / 50;  /* 2% */
+    ceiling = found.count / 100;
     where=0; limit=0;
     for(count=0; count < found.count; count++)
       if (froms[count] == where) limit++;
       else {
         if (limit > ceiling) {
           for (basement=0; basement < found.count; basement++)
-            if ( found.pair[basement].from.dword == where ) {
+            if ( ( found.pair[basement].from.dword == where ) &&
+                 ( found.pair[basement].size.dword <  0x28  ) ) {
                  found.pair[basement].from.dword =  0xffffffff;
                  if (verbosity > 2)
                    fprintf(stderr,"Removed match of length %i\n", found.pair[basement].size.dword);
@@ -372,18 +385,30 @@ fprintf(stderr,"mat %i to %i from %i tot %i\n",
 
 
   if ( verbosity > 0 ) {
-    fprintf(stderr, "Statistics for sdelta generation.\n");
-    fprintf(stderr, "Blocks in from               %i\n", from.ordereds);
-/**/
-    fprintf(stderr, "Leaping                      %lli\n", leaping);
-    fprintf(stderr, "Sizing                       %lli\n", sizing);
-/**/
     total=0;
     for ( where = 0; where < found.count; where++)
       total += found.pair[where].size.dword;
-    fprintf(stderr, "Tentative Matching bytes     %i\n",           total);
-    fprintf(stderr, "Tentative Umatched bytes     %i\n", to.size - total);
-    fprintf(stderr, "Tentative Matched sequences  %i\n", found.count);
+
+    limit=0;
+    count=0;
+    for ( where = 0; where < found.count; where++)
+      if ( found.pair[where].from.dword == 0xffffffff ) {
+        limit += found.pair[where].size.dword;
+        count++;
+      }
+
+    fprintf(stderr, "Generation Statistics.\n");
+    fprintf(stderr, "Searchable sequences  %i\n", from.ordereds);
+    fprintf(stderr, "Matched    sequences  %i\n", found.count - count);
+    fprintf(stderr, "Tripe      sequences  %i\n", count);
+    fprintf(stderr, "Matching   bytes      %i\n", total   - limit);
+    fprintf(stderr, "Umatched   bytes      %i\n", to.size - total);
+    fprintf(stderr, "Tripe      bytes      %i\n", limit);
+/**/
+    fprintf(stderr, "Leaping               %lli\n", leaping);
+    fprintf(stderr, "Sizing                %lli\n", sizing);
+/**/
+
 
   }
 
