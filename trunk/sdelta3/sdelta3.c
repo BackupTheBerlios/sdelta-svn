@@ -38,6 +38,7 @@ sdelta3 is a word blocking dictionary compressor.
 char    magic[]    =  { 0x13, 0x04, 00, 02 };
 int	verbosity  =  0;
 
+
 #define  leap(frog)                            \
   if ( ceiling >= frog ) {                     \
     from.offset = from.ordered[where + frog];  \
@@ -48,6 +49,82 @@ int	verbosity  =  0;
             ceiling  -=  frog;                 \
     } else  ceiling   =  frog - 1;             \
   }
+
+
+void  favor_adjacent_found(FOUND f) {
+  int  loop, s, z;
+  int  max;
+
+  f.offset = 0;
+
+  max = f.count - 1;
+
+/* 0x0c 0x10 seem to work good */
+
+  for (loop = 1; loop < max; loop++ )
+    if   ( ( f.pair[loop  ].size.dword <= 0x0c       ) &&
+           ( f.pair[loop  ].to.dword   != 0xffffffff ) ) {
+      if ( ( f.pair[loop-1].to.dword   +  f.pair[loop-1].size.dword != f.pair[loop  ].to.dword ) ||
+           ( f.pair[loop  ].to.dword   +  f.pair[loop  ].size.dword != f.pair[loop+1].to.dword ) ) {
+             f.pair[loop  ].to.dword   =  0xffffffff;
+        loop -= 2;
+        loop = MAX(loop,1);
+      }
+    } else
+    if   ( ( f.pair[loop  ].size.dword <= 0x10       ) &&
+           ( f.pair[loop  ].to.dword   != 0xffffffff ) )
+      if ( ( f.pair[loop-1].to.dword   +  f.pair[loop-1].size.dword != f.pair[loop  ].to.dword ) &&
+           ( f.pair[loop  ].to.dword   +  f.pair[loop  ].size.dword != f.pair[loop+1].to.dword ) ) {
+             f.pair[loop  ].to.dword    = 0xffffffff;
+        loop -= 2;
+        loop = MAX(loop,1);
+      }
+}
+
+u_int32_t       remove_overlap_found(FOUND f) {
+  int  loop, s, z;
+
+  f.offset = 0;
+
+  for (loop = 1; loop < f.count; loop++ )
+    if ( f.pair[loop    ].to.dword   >= f.pair[f.offset].to.dword +
+                                        f.pair[f.offset].size.dword ) {
+                f.offset++;
+         f.pair[f.offset]             = f.pair[loop    ];
+    } else
+    if ( f.pair[f.offset].size.dword >= f.pair[loop    ].size.dword ) {
+      z= f.pair[f.offset].to.dword    + f.pair[f.offset].size.dword -
+         f.pair[loop    ].to.dword;
+      s= f.pair[loop    ].size.dword  - z;
+      if ( s >= 0x08 ) {
+                f.offset++;
+         f.pair[f.offset].to.dword    = f.pair[loop    ].to.dword   + z;
+         f.pair[f.offset].from.dword  = f.pair[loop    ].from.dword + z;
+         f.pair[f.offset].size.dword  = s;
+      }
+    } else {
+      s= f.pair[loop    ].to.dword    - f.pair[f.offset].to.dword;
+      if ( s >= 0x08 ) {
+         f.pair[f.offset].size.dword  = s;
+                f.offset++;
+      }
+      f.offset--;  loop--;  /* Recompare this find with earlier find */
+    }
+  return f.offset + 1;
+}
+
+
+u_int32_t       remove_tripe_found(FOUND f) {
+  int  loop;
+
+  f.offset  = 0;
+  for (loop = 0; loop < f.count; loop++ )
+    if(f.pair[loop      ].to.dword != 0xffffffff)
+       f.pair[f.offset++]           = f.pair[loop];
+
+  return f.offset;
+}
+
 
 #define  next_offset()  \
     while ((to.ceiling > to.offset) && ! (trip_byte(to.buffer[to.offset++]))); \
@@ -80,9 +157,8 @@ void	output_sdelta(FOUND found, TO to, FROM from) {
 
   for ( block = 0;  block < found.count ; block++ ) {
 
+    if               (found.pair[block].to.dword == 0xffffffff)  continue;
     origin.dword   =  found.pair[block].from.dword;
-    if (origin.dword == 0xffffffff)  continue;
-
     stretch.dword  =  found.pair[block].to.dword - to.offset;
       size.dword   =  found.pair[block].size.dword;
         to.offset  =  found.pair[block].to.dword + size.dword;
@@ -111,7 +187,7 @@ void	output_sdelta(FOUND found, TO to, FROM from) {
 
   for ( block = 0; block < found.count ; block++ ) {
 
-    if (found.pair[block].from.dword == 0xffffffff) continue;
+    if (found.pair[block].to.dword == 0xffffffff) continue;
 
     stretch.dword    =  found.pair[block].to.dword  -  to.offset;
 
@@ -149,13 +225,13 @@ void  make_sdelta(INPUT_BUF *from_ibuf, INPUT_BUF *to_ibuf)  {
   MATCH			match, potential;
   FOUND			found;
   unsigned int		count, total, where, ceiling, basement;
-  int                   limit;
+  int                   limit, resize;
   u_int16_t		tag;
   SHA_CTX		ctx;
+  unsigned int          *hist;
   unsigned char		*here, *there;
   QWORD			*from_q, *to_q;
   u_int32_t             *froms;
-  int			resize;
 
 /**/
   u_int64_t		sizing=0;
@@ -169,6 +245,17 @@ void  make_sdelta(INPUT_BUF *from_ibuf, INPUT_BUF *to_ibuf)  {
   static int compare_dword (const void *v0, const void *v1)  {
 #endif
     return  *(u_int32_t *)v0 - *(u_int32_t *)v1;
+  }
+
+#if __GNUC__ >= 4
+  auto   int compare_pair (const void *v0, const void *v1)  {  
+#else
+  static int compare_pair (const void *v0, const void *v1)  {
+#endif
+    PAIR *p0, *p1;
+    p0 = (PAIR *)v0;
+    p1 = (PAIR *)v1;
+    return  p0->to.dword - p1->to.dword;
   }
 
 
@@ -279,9 +366,8 @@ sizing++;
         potential.head   =
         potential.tail   = 0;
 
-        limit = MIN( from.offset,
-                       to.offset - basement );
-         here =        to.offset + to.buffer;     here--;
+        limit = MIN( from.offset, to.offset - basement);
+         here = to.offset + to.buffer; here--;
         there =      from.offset + from.buffer;  there--;
         while ( ( limit                 >  potential.head         ) &&
                 ( here[-potential.head] == there[-potential.head] ) )
@@ -317,71 +403,35 @@ sizing++;
 
       }  /* finished finding matches for to.block */
 
-      if ( match.total > 0x0c ) {
+      if ( match.total >= 0x08 ) {
         found.pair[found.count].to.dword      =  match.to;
         found.pair[found.count].from.dword    =  match.from;
         found.pair[found.count].size.dword    =  match.total;
-        basement                              =  match.total + 
-                                                 match.to;
 /*
 fprintf(stderr,"mat %i to %i from %i tot %i\n", 
         found.count, match.to, 
         match.from, match.total);
 */
         found.count++;
-        to.offset = match.to + match.total - 1;
-
+        if ( match.total > 0x100 ) {
+          to.offset = match.to + match.total - 1;
+          basement  =  match.total +  match.to;
+        }
               next_offset();
       } else  next_offset();
   }
 
 /* Matching complete */
 
+  qsort (found.pair, found.count, sizeof(PAIR), compare_pair );
+  found.count = remove_overlap_found(found);
+                favor_adjacent_found(found);
+
   found.pair[found.count  ].to.dword    =    to.size;
   found.pair[found.count  ].from.dword  =  from.size;
   found.pair[found.count++].size.dword  =  0;
 
   temp.current += sizeof(PAIR) * found.count;
-
-
-/* Tripe is discard for high compression to soak */
-
-/*
-
-very difficult determining a value for ceiling
-Values between 0.39% and 2% work good,
-but which one works best seems to vary.
-Tripe tends to have a small size.
-However that needs to be enforced otherwise
-some meaty matches could be discarded.
-
-*/
-
-
-  if (found.count > 0x400) {
-    froms = (u_int32_t *)temp.current;
-    for(count=0; count < found.count; count++)
-      froms[count]=found.pair[count].from.dword;
-    qsort(froms, found.count, sizeof(u_int32_t), compare_dword);
-    ceiling = found.count / 100;
-    where=0; limit=0;
-    for(count=0; count < found.count; count++)
-      if (froms[count] == where) limit++;
-      else {
-        if (limit > ceiling) {
-          for (basement=0; basement < found.count; basement++)
-            if ( ( found.pair[basement].from.dword == where ) &&
-                 ( found.pair[basement].size.dword <  0x28  ) ) {
-                 found.pair[basement].from.dword =  0xffffffff;
-                 if (verbosity > 2)
-                   fprintf(stderr,"Removed match of length %i\n", found.pair[basement].size.dword);
-            }
-          if (verbosity > 1)
-            fprintf(stderr,"Discarded tripe\n");
-        }
-        limit = 0;  where = froms[count];
-      }
-  }
 
 
   if ( verbosity > 0 ) {
@@ -392,7 +442,7 @@ some meaty matches could be discarded.
     limit=0;
     count=0;
     for ( where = 0; where < found.count; where++)
-      if ( found.pair[where].from.dword == 0xffffffff ) {
+      if (       found.pair[where].to.dword == 0xffffffff ) {
         limit += found.pair[where].size.dword;
         count++;
       }
@@ -409,8 +459,24 @@ some meaty matches could be discarded.
     fprintf(stderr, "Sizing                %lli\n", sizing);
 /**/
 
-
+    if ( verbosity > 2 ) {
+      hist = (unsigned int *) temp.current;
+      memset(hist, 0, sizeof(int) * 0x10000);
+      for (where = 0; where < found.count; where++)
+        if (found.pair[where].to.dword != 0xffffffff)
+          if (found.pair[where].size.dword >= 0x10000)
+            hist[0]++;  else
+            hist[found.pair[where].size.dword]++;
+      fprintf(stderr,"Matches of size >= 65536  %i\n", hist[0]);
+      for(where = 1; where < 0x10000; where++)
+        if( hist[where] > 0 )
+          fprintf(stderr, "Matches of size %i  %i\n", where, hist[where]);
+    }
   }
+
+  temp.current -= found.count * sizeof(PAIR);
+                  found.count = remove_tripe_found(found);
+  temp.current += found.count * sizeof(PAIR);
 
   unload_buf(from_ibuf);
   output_sdelta(found, to, from);
