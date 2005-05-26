@@ -156,8 +156,9 @@ void	output_sdelta(FOUND found, TO to, FROM from) {
   to.offset  =  0;
 
   for ( block = 0;  block < found.count ; block++ ) {
-
+/*
     if               (found.pair[block].to.dword == 0xffffffff)  continue;
+*/
     origin.dword   =  found.pair[block].from.dword;
     stretch.dword  =  found.pair[block].to.dword - to.offset;
       size.dword   =  found.pair[block].size.dword;
@@ -187,7 +188,9 @@ void	output_sdelta(FOUND found, TO to, FROM from) {
 
   for ( block = 0; block < found.count ; block++ ) {
 
+/*
     if (found.pair[block].to.dword == 0xffffffff) continue;
+*/
 
     stretch.dword    =  found.pair[block].to.dword  -  to.offset;
 
