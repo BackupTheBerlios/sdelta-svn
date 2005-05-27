@@ -25,13 +25,6 @@ sdelta3 is a word blocking dictionary compressor.
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-
-#ifdef USE_LIBMD
-#include <sha.h>
-#else
-#include <openssl/sha.h>
-#endif
-
 #include "input.h"
 #include "sdelta3.h"
 
@@ -138,7 +131,7 @@ void	output_sdelta(FOUND found, TO to, FROM from) {
   int			block;
   DWORD			*dwp;
   unsigned int		offset_unmatched_size;
-  SHA_CTX		ctx;
+  DECLARE_DIGEST_VARS;
   unsigned char		*here, *there;
 
   found.buffer   =  (unsigned char *)  temp.current;
@@ -214,9 +207,7 @@ fprintf(stderr,"blk %i  to %i  stretch %i\n", block, to.offset, stretch.dword);
   found.buffer[offset_unmatched_size++] = unmatched_size.byte.b1;
   found.buffer[offset_unmatched_size++] = unmatched_size.byte.b0;
 
-  SHA1_Init(&ctx);
-  SHA1_Update(&ctx, found.buffer + 4 + DIGEST_SIZE, found.offset - (4 + DIGEST_SIZE));
-  SHA1_Final(found.buffer + 4, &ctx);
+  GET_DIGEST(found.buffer + 4 + DIGEST_SIZE, found.offset - (4 + DIGEST_SIZE), found.buffer + 4);
 
   fwrite( found.buffer, 1, found.offset, stdout );
 }
@@ -230,7 +221,7 @@ void  make_sdelta(INPUT_BUF *from_ibuf, INPUT_BUF *to_ibuf)  {
   unsigned int		count, total, where, ceiling, basement;
   int                   limit, resize;
   u_int16_t		tag;
-  SHA_CTX		ctx;
+  DECLARE_DIGEST_VARS;
   unsigned int          *hist;
   unsigned char		*here, *there;
   QWORD			*from_q, *to_q;
@@ -280,9 +271,7 @@ void  make_sdelta(INPUT_BUF *from_ibuf, INPUT_BUF *to_ibuf)  {
   from.ordered = block_list   ( from.buffer, from.size,   &from.ordereds );
                  order_blocks ( from.buffer, from.ordered, from.ordereds );
 
-  SHA1_Init(&ctx);
-  SHA1_Update(&ctx, from.buffer, from.size);
-  SHA1_Final(from.digest, &ctx);
+  GET_DIGEST(from.buffer, from.size, from.digest);
 
   found.pair                = ( PAIR * ) temp.current;
   found.count               =  0;
@@ -495,7 +484,7 @@ void   make_to(INPUT_BUF *from_ibuf, INPUT_BUF *found_ibuf)  {
   unsigned char		control;
   u_int32_t		block;
   u_int32_t		size;
-  SHA_CTX		ctx;
+  DECLARE_DIGEST_VARS;
 
   if (from_ibuf) {
       from.buffer  =  from_ibuf->buf;
@@ -569,13 +558,9 @@ void   make_to(INPUT_BUF *from_ibuf, INPUT_BUF *found_ibuf)  {
           found.size    =  found.size   - from.size    - (4 + DIGEST_SIZE);
   } else  found.size   -=  4 + DIGEST_SIZE;
 
-  SHA1_Init(&ctx);
-  SHA1_Update(&ctx, from.buffer, from.size);
-  SHA1_Final(from.digest, &ctx);
+  GET_DIGEST(from.buffer, from.size, from.digest);
   
-  SHA1_Init(&ctx);
-  SHA1_Update(&ctx, found.buffer + 4 + DIGEST_SIZE, found.size);
-  SHA1_Final(found.digest, &ctx);
+  GET_DIGEST(found.buffer + 4 + DIGEST_SIZE, found.size, found.digest);
 	    
   if  ( memcmp( found.digest, found.buffer + 4, DIGEST_SIZE ) != 0 ) {
     fprintf(stderr, "The sha1 for this sdelta did not match.\nAborting.\n");

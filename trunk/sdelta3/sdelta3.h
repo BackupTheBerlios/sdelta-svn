@@ -1,9 +1,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include "blocks.h"
-
-/* SHA1 digest */
-#define DIGEST_SIZE 20
+#include "digest.h"
 
 typedef struct FROM {
   unsigned char *buffer;		/* ptr to the file in memory	*/
