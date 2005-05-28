@@ -1,4 +1,26 @@
+Sat May 28 08:26:36 UTC 2005	no release yet	Kyle Sallee
+
+I implemented minor tuning to blocks.c and sdelta3.c
+that overall produces smaller compressed patches.
+Pavel Gorshkov added support for both gnutls 1.2.x and 1.0.x
+I modified the Makefiles to automatically compile and
+link sdelta3 with available libraries that it requires.
+Few modifications are left before sdelta3 is released.
+sdreq should be modified to automatically request and
+download 7za compressed sdelta3 patches instead of
+patches in the original sdelta format.
+
+Unfortunately, patch production has been offline
+for at least 4 days if not more because berlios.de
+has neglected starting cron.
+Patch production is dependent on cron 
+running and their http server working.
+Neither have been dependable recently.
+Anyone know a good home for the PPR?
+
+
 Sat May 21 07:06:35 UTC 2005	no release yet	Kyle Sallee
+
 This release introduces sdelta3.
 sdelta3 produces smaller compressed
 patches than sdelta and sdelta2.
