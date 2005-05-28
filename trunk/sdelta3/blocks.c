@@ -38,8 +38,7 @@ int  trip_byte(char b)  {
 #ifndef LIGHT
     case 0x09 :
     case '/'  :
-    case '<'  :
-    case '>'  : 
+    case '<'  : 
 #endif
     case 0x90 : return 1; break;
     default   : return 0; break;
