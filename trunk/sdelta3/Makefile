@@ -17,19 +17,17 @@ sdelta3: *.c *.h
 		echo '*** libdlmalloc (/usr/ports/devel/libdlmalloc)'; \
 	    fi \
 	else \
-	    echo -n 'Checking for OpenSSL/GnuTLS... '; \
+	    echo -n 'Checking for OpenSSL/libgcrypt... '; \
 	    if openssl version >/dev/null; then \
 		extra_ldflags='-lcrypto'; \
 		echo 'using OpenSSL'; \
-	    elif gnutls-cli --version 2>&1 | grep 'version 1\.0' >/dev/null; then \
-		extra_cflags='-DUSE_GNUTLS10' extra_ldflags='-lgnutls'; \
-		echo 'using GnuTLS version 1.0.x'; \
-	    elif gnutls-cli --version 2>&1 | grep 'version 1\.[2-9]' >/dev/null; then \
-		extra_cflags='-DUSE_GNUTLS' extra_ldflags='-lgnutls'; \
-		echo 'using GnuTLS version 1.2+'; \
+	    elif libgcrypt-config --version >/dev/null; then \
+		extra_cflags='-DUSE_LIBGCRYPT' \
+		extra_ldflags="$$(libgcrypt-config --libs)"; \
+		echo 'using libgcrypt'; \
 	    else \
 		echo 'none found'; \
-		echo '*** Please install either OpenSSL or GnuTLS'; \
+		echo '*** Please install either OpenSSL or libgcrypt'; \
 		exit 1; \
 	    fi \
 	fi 2>/dev/null; \
