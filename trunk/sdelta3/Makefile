@@ -7,7 +7,7 @@ LDFLAGS ?= -Wl,-s
 
 all:	sdelta3
 
-sdelta3: *.c *.h
+sdelta3 sdelta3-lt: *.c *.h
 	@if [ "$$(uname)" = 'FreeBSD' ]; then \
 	    extra_cflags='-DUSE_LIBMD' extra_ldflags='/usr/lib/libmd.a'; \
 	    if [ -e /usr/local/lib/libdlmalloc.so ]; then \
