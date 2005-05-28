@@ -1,54 +1,45 @@
 CC      := gcc
 PREFIX  ?= /usr
 CFLAGS  ?= -O3 -pipe
-#CFLAGS  += -finline-functions
 LDFLAGS ?= -Wl,-s
 
-# Yes it auto detects the libraries to use
-# Is this a good method for it?
+.PHONY: all install clean
 
-
-openssl  = $(shell bash -c "  pkg-config --exists             openssl && \
-                              pkg-config --libs               openssl")
-
-gnutls   = $(shell bash -c "! pkg-config --exists             openssl && \
-                              pkg-config --exists              gnutls && \
-                              pkg-config --atleast-version=1.2 gnutls && \
-                              pkg-config --libs                gnutls |  \
-                              sed s:^:-DGNUTLS\ :")
-
-gnutls10 = $(shell bash -c "! pkg-config --exists             openssl && \
-                              pkg-config --exists              gnutls && \
-                              pkg-config --max-version=1.0.99  gnutls && \
-                              pkg-config --libs                gnutls |  \
-                              sed s:^:-DUSE_GNUTLS10\ :")
-
-libmd    = $(shell bash -c "! pkg-config --exists             openssl && \
-                            ! pkg-config --exists              gnutls && \
-                              [ -f /usr/lib/libmd.a ]                 && \
-                              echo /usr/lib/libmd.a -DUSE_LIBMD")
-
-dlmalloc = $(shell bash -c "  [ -f       /usr/lib/libdlmalloc ]       || \
-                              [ -f /usr/local/lib/libdlmalloc ]       && \
-                              echo -ldlmalloc")
-
-.PHONY: all bsd install clean
-
-all:	sdelta3 sdelta3-lt
-
+all:	sdelta3
 
 sdelta3: *.c *.h
-	$(CC) $(CFLAGS) $(LDFLAGS) *.c -lcrypto -o sdelta3    $(gnutls) $(gnutls10) $(openssl) $(libmd) $(dlmalloc)
-
-sdelta3-lt: *.c *.h
-	$(CC) $(CFLAGS) $(LDFLAGS) *.c -lcrypto -o sdelta3-lt $(gnutls) $(gnutls10) $(openssl) $(libmd) $(dlmalloc) -DLIGHT
+	@if [ "$$(uname)" = 'FreeBSD' ]; then \
+	    extra_cflags='-DUSE_LIBMD' extra_ldflags='/usr/lib/libmd.a'; \
+	    if [ -e /usr/local/lib/libdlmalloc.so ]; then \
+		extra_ldflags="-ldlmalloc $$extra_ldflags"; \
+	    else \
+		echo '*** For optimal performance, please install'; \
+		echo '*** libdlmalloc (/usr/ports/devel/libdlmalloc)'; \
+	    fi \
+	else \
+	    echo -n 'Checking for OpenSSL/GnuTLS... '; \
+	    if openssl version >/dev/null; then \
+		extra_ldflags='-lcrypto'; \
+		echo 'using OpenSSL'; \
+	    elif gnutls-cli --version 2>&1 | grep 'version 1\.0' >/dev/null; then \
+		extra_cflags='-DUSE_GNUTLS10' extra_ldflags='-lgnutls'; \
+		echo 'using GnuTLS version 1.0.x'; \
+	    elif gnutls-cli --version 2>&1 | grep 'version 1\.[2-9]' >/dev/null; then \
+		extra_cflags='-DUSE_GNUTLS' extra_ldflags='-lgnutls'; \
+		echo 'using GnuTLS version 1.2+'; \
+	    else \
+		echo 'none found'; \
+		echo '*** Please install either OpenSSL or GnuTLS'; \
+		exit 1; \
+	    fi \
+	fi 2>/dev/null; \
+	echo -e "\nCompiling sdelta3 and sdelta3-lt with\n\n\tCFLAGS  = $(CFLAGS) $$extra_cflags\n\tLDFLAGS = $$extra_ldflags $(LDFLAGS)\n"; \
+	set -e; \
+	$(CC) $(CFLAGS) $$extra_cflags         *.c -o sdelta3    $$extra_ldflags $(LDFLAGS); \
+	$(CC) $(CFLAGS) $$extra_cflags -DLIGHT *.c -o sdelta3-lt $$extra_ldflags $(LDFLAGS)
 
 clean:
 	rm -f sdelta3 sdelta3-lt
-
-#bsd:  *.c *.h
-#	$(CC) $(CFLAGS) -DUSE_LIBMD *.c $(LDFLAGS) -ldlmalloc /usr/lib/libmd.a -o sdelta3
-#	$(CC) $(CFLAGS) -DUSE_LIBMD *.c $(LDFLAGS) -ldlmalloc /usr/lib/libmd.a -o sdelta3-fast -DLIGHT
 
 install: sdelta3 sdelta3-lt
 	mkdir   -m 0755  -p                     $(PREFIX)/bin

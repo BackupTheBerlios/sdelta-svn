@@ -615,7 +615,7 @@ void  help(void)  {
   printf("$ sdelta3 linux-2.6.7.tar linux-2.6.8.1.tar > linux-2.6.7-2.6.8.1.tar.sd3\n");
   printf("$ bzip2   linux-2.6.7-2.6.8.1.tar.sd3\n\n\n");
   printf("Below is an example for making linux-2.6.8.1.tar\n\n");
-  printf("$ bunzip3 linux-2.6.7-2.6.8.1.tar.sd3.bz2\n");
+  printf("$ bunzip2 linux-2.6.7-2.6.8.1.tar.sd3.bz2\n");
   printf("$ sdelta3 linux-2.6.7.tar linux-2.6.7-2.6.8.1.tar.sd3 > linux-2.6.8.1.tar\n");
   exit(EXIT_FAILURE);
 }
