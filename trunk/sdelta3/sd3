@@ -16,7 +16,7 @@ compression()  {
 }
 
 
-is_sdelta3()  { file -b -m $SD_MAGIC "$1" 2>/dev/null | grep -q sdelta3; }
+is_sdelta3()  { file -b -m $SD3_MAGIC "$1" 2>/dev/null | grep -q sdelta3; }
 
 
 root()  {
