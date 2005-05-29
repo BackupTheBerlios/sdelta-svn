@@ -315,13 +315,10 @@ download()  {
     then  URL="$ST"
     else  URL="$SP"
     fi
-    if  !  [  -s   "$SDREQ_DIR/received/$REPLY.7z"   ]  &&
-        !  [  -s   "$SDREQ_DIR/received/$REPLY.bz2"  ]
+    if  !  [  -s   "$SDREQ_DIR/received/$REPLY.7z"   ]
     then
-      if    available       "$URL/$REPLY.7z"
-      then  transfer        "$URL/$REPLY.7z"
-      elif  available       "$URL/$REPLY.bz2"
-      then  transfer        "$URL/$REPLY.bz2"
+      if    available             "$URL/$REPLY.7z"
+      then  transfer              "$URL/$REPLY.7z"
       else  false
       fi  &&
       rm  -f  "$SDREQ_DIR/waiting/$REPLY"
@@ -380,8 +377,6 @@ DIALOG="dialog
 --backtitle
 Patch Request, Download and Application Tool
 --stdout"
-
-
 
 
 TAB="	"
