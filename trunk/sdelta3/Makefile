@@ -37,8 +37,8 @@ clean:
 install: sdelta3 sdelta3-lt
 	mkdir   -m 0755  -p                     $(PREFIX)/bin
 	install -m 0755  sdelta3  sdelta3-lt    $(PREFIX)/bin
-	install -m 0755  sd       sdreq         $(PREFIX)/bin
+	install -m 0755  sd3      sdreq         $(PREFIX)/bin
 	mkdir   -m 0755  -p                     $(PREFIX)/share/sdelta
 	install -m 0644  LICENSE  USAGE         $(PREFIX)/share/sdelta
 	install -m 0644  README   sdreq_README  $(PREFIX)/share/sdelta
-	install -m 0644  sdelta.magic           $(PREFIX)/share/sdelta/magic
+	install -m 0644  sdelta3.magic          $(PREFIX)/share/sdelta/magic
