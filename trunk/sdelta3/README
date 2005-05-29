@@ -1,157 +1,68 @@
-	What is sdelta?
+	What is sdelta3?
 
-sdelta is a line blocking dictionary compressor.
-Line blocking means that it makes blocks out of lines,
-and therefore blocks are often aligned on line boundaries.
-Dictionary compressor means that it uses the first file as a dictionary.
-The second file can be expressed as a combination 
-of references into the dictionary file and the 
-blocks that are not in the dictionary file.
-
-
-	Why sdelta?
-
-sdelta has one primary purpose.
-It is used to minimize bytes transferred to update 
-previously downloaded source tarballs to current versions.
-sdelta is designed to create tight deltas of text files.
-Tarballs for sources are full of text files.
-sdelta works extremely good on these.
-
-Version releases of source tarballs are often 
-85% or more identical to the previous release.
-When upgrading installed software why download 
-completely new source tarballs when the box 
-already has source tarballs for previous versions?
-The previously downloaded source tarballs already contain 
-85% to 90% of the same data as the new source tarballs.
-Why not download only the new data and 
-references to the data one already has?
-Download sdelta upgrade patches at 10% the size and 
-10 times the speed of transferring full source tarballs.
-
-	How does sdelta work?
-
-sdelta attempts to find long matching sequences 
-of line aligned bytes in both files.
-It outputs references to the data both files have 
-in common and the new data in the second file.
+sdelta3 is a program similar to the programs "patch" and "diff."
+While "patch" is only for text files in directories
+sdelta3 accepts two files of any type.
+Then, it creates a delta or patch file.
+The delta describes the fewest amount of changes 
+required to transform the first file into the second file.
 
 
-	How well does sdelta perform compared to xdelta?
+	Why sdelta3?
 
-sdelta is designed specifically for creating 
-deltas of uncompressed tar files of sources.
-Therefore, it is extremely good at it.
-However using a dynamic block size and 
-advanced pattern matching algorithim requires 
-sdelta to use more time and memory than 
-xdelta which uses a fixed block size.
-xdelta is available from http://xdelta.sourceforge.net
-sdelta is currently half as fast as xdelta.
+sdelta3 has one primary purpose.
+System administrators can download the miniscule 
+compressed sdelta3 patch files to update previously 
+downloaded source tarballs to current versions.
+Compressed sdelta3 patches are often 10% the size 
+of full new source tarball.
+Therefore, downloading, uncompressing, and applying
+sdelta3 patches are faster than downloading and
+uncompressing a full source tarballs.
+ 
 
-The following is a comparison of sdelta and xdelta 
-on a very large dictionary file and message file.
-The numbers with current sdelta may vary as it has 
-undergone some optimizations to make it more suitable
-for matching against dissimilar dictionary files.
+	How does sdelta3 work?
 
-bytes		file name
-197888000	linux-2.6.7.tar		<- dictionary file
-200847360	linux-2.6.8.1.tar	<- message    file
-
-2060961		linux-2.6.7-linux-2.6.8.1.tar.sdelta.bz2
-3190401		linux-2.6.7-linux-2.6.8.1.tar.xdelta.bz2
-
-In the above comparison both the xdelta and sdelta patch
-files were generated with compression disabled.
-Finally, each delta file was compressed with bzip2.
-
-In this example a 3 megabyte xdelta is far faster 
-to download than a 34 megabyte linux-2.6.8.1.tar.bz2
-However the 2 megabyte bzip2 compressed sdelta 
-file is 1/3 faster to transfer and 1/3 smaller 
-to download than the xdelta for the above files.
-
-Replicating the above example can yield:
-
-6.9M linux-2.6.7-linux-2.6.8.1.tar.xdelta  or
-3.2M linux-2.6.7-linux-2.6.8.1.tar.xdelta  if gzip compression enabled.
-and
-13M linux-2.6.7-linux-2.6.8.1.tar.sdelta
-
-Now type:
-bzip2 -9 linux-2.6.7-linux-2.6.8.1.tar.sdelta
-Like sorcery the 13M file shrinks down to 2M.
-
-13M  sdelta bzip2 compressed becomes 2M
-6.9M xdelta bzip2 compressed becomes 3M
-
-Do the numbers seem counter intuitive?
-Fortunately, the explanation is not complex.
-
-xdelta and sdelta are both delta generators 
-and also both dictionary compressors.
-The uncompressed xdelta is smaller than 
-the uncompressed sdelta because the xdelta 
-contains more references to matching data 
-than the sdelta does.
-
-References to matching data is a form of compression.
-Therefore, the reference portion of a delta is nearly
-incompressible by advanced compression program such as bzip2.
-The bzip2 of the sdelta patch compressed better 
-because it has less reference data and more 
-compressible data than the xdelta patch file.
-
-The compressed sdelta is smaller than the compressed xdelta,
-because the quality of the fewer matches in the sdelta is 
-better than the quality of the many matches in the xdelta.
-Quality over quantity prevails.
-
-Here is how sdelta and xdelta compare on medium and small source tarballs:
-
-85M  glibc-2.3.2.tar			<- message file
-1.1M glibc-2.3.2-2.3.3.tar.sdelta.bz2	<- 1.1M bzip2 sdelta patch file
-1.8M glibc-2.3.2-2.3.3.tar.xdelta.bz2	<- 1.8M bzip2 xdelta patch file
-
-3.0M   polypaudio-0.4.tar			<- message file
-34104  polypaudio-0.3-0.4.tar.sdelta.bz2	<- 25% smaller bzip2 sdelta
-45088  polypaudio-0.3-0.4.tar.xdelta.bz2	<- larger bzip2 xdelta
+sdelta3 attempts to find long matching sequences 
+of bytes that the two files share in common.
+It outputs references to the bytes that both files have in common.
+Finally, it outputs the byte sequences in the the second 
+file has which can not be matched in the first file.
 
 
-	Is something this good free?
+	How well does sdelta3 perform?
 
-Certainly sdelta is free!
-The license that governs the use, modification 
-and redistribution of sdelta is enclosed as LICENSE.
+sdelta3's overall efficiency on creating compressible
+patches of source tarballs is unmatched.
+However sdelta3's nearest competitor is bdelta.
+http://deltup.sunsite.dk/
+ 
+bdelta and sdelta3 use different aproaches for the task.
+sdelta3 is honed to the characteristics of textual files,
+such as source tarballs.
+bdelta uses a more generic whittling down algorithim
+that is insensitive to the characteristics of file type.
 
-sdelta would not be as good without other freely available 
-high quality software like gzip and bzip2 compressors,
-and of course rsync which inspired xdelta which inspired sdelta.
+In terms of speed sdelta3 tends to be faster than bdelta
+on small files, however on 100M+ files bdelta tends to
+be faster than sdelta3.
+Both bdelta and sdelta3 are incredibly 
+efficient and fast delta generators.
 
-Although sdelta is free please consider yourself morally obligated 
-to help the free software revolution by contributing time effort or 
-your own high quality free software that you design and implement.
+I speculate that bdelta may be better than
+sdelta3 on non textual or binary data.
+However no comparisons between bdelta and
+sdelta3 on non source tarballs were done.
 
-sdelta is implemented to compile and run on 
-glibc Linux boxes of any endian architecture.
-sdelta comes with no warranty.
-If it breaks then you can keep the pieces.
-Provide bug reports if you want fixes.
-Send them to cromwell@ibiblio.org.
-Send improvements and code optimization as 
-well if you want it to go faster for everyone.
+Both bdelta and sdelta3 outperform xdelta, bsdiff
+and any other delta generator I could find.
 
-sdelta was written without copying source code from other sources.
-sdelta is not a fork, clone nor copy, of other software project.
-Although similar in goal to xdelta the aproach of using dynamically
-sized line aligned blocks is a radical departure from xdelta's fixed
-block size.
 
-My thanks to Joshua MacDonald, because without xdelta 
-I might not have decided to design and implement sdelta.
-sdelta is not a better xdelta.
-However it does generate better deltas for source tarballs.
-xdelta is still the king of delta generators.  Hail to the king.
-sdelta is merely the duke of text delta generators.
+	Thank who?
+
+sdelta3 inherits from Kyle Sallee's sdelta which is an 
+original project that was not forked from any other project.
+sdelta3 was inspired in part by John Whitney's bdelta.
+bdelta produced better patches than sdelta, but required longer.
+sdelta was inspired by Joshua MacDonald's xdelta program.
+However bdelta is far more like xdelta than sdelta or sdelta3.

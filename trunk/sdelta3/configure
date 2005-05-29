@@ -3,12 +3,13 @@
 echo  "sdelta3 is copyright 2004, 2005 by Kyle Sallee, All Rights Reserved."
 echo
 echo  "sdelta3 requires a hashing library."
-echo  "It can use either: gnutls 1.2.x or 1.0.x; openssl 0.9.x; libmd"
-echo  "openssl homepage is http://www.openssl.org"
-echo  "gnutls  homepage is http://www.gnu.org/software/gnutls"
+echo  "It can use either: libmd; openssl 0.9.x; libgcrypt 1.2.x"
 echo  "libmd is provided with FreeBSD"
+echo  "openssl homepage is http://www.openssl.org"
+echo  "libgcrypt homepage is http://directory.fsf.org/security/libgcrypt.html"
 echo  "When more than one library is available the library"
 echo  "to use is selected in the order listed above."
+echo  "However libmd is only used on FreeBSD."
 echo
 echo  "On FreeBSD sdelta3 may require libdlmalloc"
 echo  "However it might not."

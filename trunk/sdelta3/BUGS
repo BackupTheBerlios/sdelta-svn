@@ -1,7 +1,0 @@
-No bugs discovered yet.
-sdelta is tested on:
-
-glibc 2.3.3
-linux 2.6.8.1
-gcc   3.4.2
-mhash 0.9.1

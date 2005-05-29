@@ -1,17 +1,18 @@
-The author is Kyle Sallee <cromwell@ibiblio.org>
-sdelta was inspired by Joshua MacDonald's xdelta algorithm
-which was inspired by Andrew Tridgell's and Paul Mackerras's
-rsync algorithm.
+The author is Kyle Sallee <kyle.sallee@gmail.com>
+sdelta3 inherits from   Kyle Sallee's                          sdelta.
+sdelta3 was inspired by John Whitney's                         bdelta.
+sdelta  was inspired by Joshua MacDonald's                     xdelta.
+xdelta  was inspired by Andrew Tridgell's and Paul Mackerras's rsync.
 
-Original sdelta source code and endian code by Kyle Sallee,
-however additional endian/architecture/POSIX 
-porting code was added by Pavel Gorshkov <svinn@gmx.net>
-so that sdelta can be run on FreeBSD and Solaris platforms.
+Original sdelta3 source code and endian code by Kyle Sallee.
+Additional endian/architecture/POSIX porting code was added
+by Pavel Gorshkov <svinn@gmx.net> so that sdelta3 can run 
+on FreeBSD and Solaris platforms.
 
 input.h and input.c contributed by Pavel Gorshkov <svinn@gmx.net>
 
 Kyle Sallee also created the Sorcerer distribution of 
 GNU Linux and free software that has been providing SAs
-cutting edge technology like xdelta and sdelta source 
-upgrade patches for years.
-Sorcerer is availble from http://sorcerer.wox.org
+cutting edge technology like xdelta, sdelta, and sdelta3
+source upgrade patches for years.
+Sorcerer is availble from http://sorcerer.berlios.de

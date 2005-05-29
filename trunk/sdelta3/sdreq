@@ -81,8 +81,8 @@ can send an email notifying pick up is ready.
 Patches can also be uploaded directly to a FTP server."
     E_HELP=$"Email address.           Example: $LOGNAME@$HOSTNAME"
     F_HELP=$"FTP upload information.  Example: ftp://$LOGNAME:password@ftp.mydom.com/pub/uploads"
-    N_HELP=$"Receive an email upon sdelta generation completion?"
-    U_HELP=$"Upload sdelta patches to your ftp server?"
+    N_HELP=$"Receive an email upon patch generation completion?"
+    U_HELP=$"Upload patches to your ftp server?"
     COMMAND=$(  $DIALOG  --title        $"Configuration Menu"  \
                          --item-help                \
                          --ok-label      "$OK"      \
@@ -114,8 +114,8 @@ can send an email notifying pick up is ready.
 Patches can also be uploaded directly to a FTP server."
   E_HELP=$"Email address.           Example: $LOGNAME@$HOSTNAME"
   F_HELP=$"FTP upload information.  Example: ftp://$LOGNAME:password@ftp.mydom.com/pub/uploads"
-  N_HELP=$"Receive an email upon sdelta generation completion?"
-  U_HELP=$"Upload sdelta patches to your ftp server?"
+  N_HELP=$"Receive an email upon patch generation completion?"
+  U_HELP=$"Upload patches to your ftp server?"
 
   echo      "$HELP"    1>&2
   echo      "$N_HELP"  1>&2
@@ -149,13 +149,13 @@ help() {
   echo
   echo  $"Usage: sdreq [command]"
   echo  $"Commands:"
-  echo  $"want		request sdelta patches from http://sdelta.berlios.de/ppr"
-  echo  $"download	retrieve previously requested sdelta patches"
+  echo  $"want		request patches"
+  echo  $"download	retrieve previously requested patches"
   echo  $"new		apply patches to create new files"
   echo  $"config		reconfigure sdreq"
   echo
   echo  $"Preparation is required before executing sdreq want."
-  echo  $"Please read /usr/share/sdelta/sdreq_README first."
+  echo  $"Please read /usr/share/sdelta3/sdreq_README first."
 }
 
 
@@ -197,7 +197,7 @@ request_patches()  {
     done
   )  >>  $LOG
 
-  if    grep  -q  "\.tar\.sd$\|\.tar$"  $LOG  2>/dev/null
+  if    grep  -q  "\.tar\.sd3$\|\.tar$"  $LOG  2>/dev/null
   then  post  $LOG
   fi
 }
@@ -243,14 +243,14 @@ match()  {
 }
 
 
-sdelta_names()  {
+patch_names()  {
   local  BEST  REPLY
   while  read;  do
     BEST="$(  match  "$REPLY"  )"
     if    [  -n          "$BEST"  ]
     then  echo  "$( echo  $BEST  |
                     tars         |
-                    basenames    )-$REPLY.sd"
+                    basenames    )-$REPLY.sd3"
     else  echo  "$REPLY"
     fi
   done
@@ -267,7 +267,7 @@ want() {
   list_empty  $SDREQ_DIR/want/  |
   basenames                     |
   tars                          |
-  sdelta_names                  |
+  patch_names                   |
   request_patches
 }
 
@@ -334,16 +334,15 @@ download()  {
 
 apply()  {
   list   $SDREQ_DIR/received/    |
-  grep  "\.sd\.7z$\|\.sd\.bz2$"  |
+  grep  "\.sd3\.7z$"             |
   sed    -r  "s:(.*):\1	\1:
-              s:	(.*)\.tar-(.*)\.tar\.sd\.7z$:	\2.tar:
-              s:	(.*)\.tar-(.*)\.tar\.sd\.bz2$:	\2.tar:"  |
+              s:	(.*)\.tar-(.*)\.tar\.sd3\.7z$:	\2.tar:"  |
   while  read  PATCH  TO;  do
     FROM="$(  match  $TO  )"
       TO="$(  list_empty   $SDREQ_DIR/want/  |
               grep   $TO                     |
               head  -n  1                    )"
-    if    sd      "$SDREQ_DIR/have/$FROM"  "$SDREQ_DIR/received/$PATCH"  \
+    if    sd3     "$SDREQ_DIR/have/$FROM"  "$SDREQ_DIR/received/$PATCH" \
                   "$SDREQ_DIR/want/$TO"
     then  rm  -f                           "$SDREQ_DIR/received/$PATCH"
     else  rm  -f  "$SDREQ_DIR/want/$TO"    "$SDREQ_DIR/received/$PATCH"
@@ -353,14 +352,14 @@ apply()  {
   done
 
   list   $SDREQ_DIR/received/      |
-  grep  "\.tar\.7z$\|\.tar\.bz2$"  |
-  while  read;  do
-    sd  translate        "$SDREQ_DIR/received/$REPLY"  \
-                         "$SDREQ_DIR/want/$(
-          list_empty     "$SDREQ_DIR/want/"  |
-          grep   "${REPLY%.*}"               |
-          head  -n  1                        )"  &&
-  rm  -f               "$SDREQ_DIR/received/$REPLY"
+  grep   "\.tar\.7z$\|\.tar\.bz2$"  |
+  while   read;  do
+    sd3   translate        "$SDREQ_DIR/received/$REPLY"  \
+                           "$SDREQ_DIR/want/$(
+           list_empty      "$SDREQ_DIR/want/"  |
+           grep   "${REPLY%.*}"               |
+           head  -n  1                        )"  &&
+    rm  -f                 "$SDREQ_DIR/received/$REPLY"
   done
 
   clean  $SDREQ_DIR/want  14
@@ -379,7 +378,7 @@ comp_progs()  {
 
 DIALOG="dialog
 --backtitle
-Sdelta Patch Request, Download and Application Tool
+Patch Request, Download and Application Tool
 --stdout"
 
 

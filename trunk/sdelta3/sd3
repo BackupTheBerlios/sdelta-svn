@@ -1,8 +1,8 @@
 #!/bin/bash
-# sd compression wrapper for sdelta
+# sd3 compression wrapper for sdelta3
 # Copyright 2005 by Kyle Sallee
 # Distributed under the terms of the SPL
-# See /usr/share/sdelta/LICENSE
+# See /usr/share/sdelta3/LICENSE
 
 
 compression()  {
@@ -16,18 +16,12 @@ compression()  {
 }
 
 
-is_sdelta()  {
-  file  -b  -m  $SD_MAGIC  "$1"  2>/dev/null  |
-  grep  -q  sdelta
-}
+is_sdelta3()  { file -b -m $SD_MAGIC "$1" 2>/dev/null | grep -q sdelta3; }
 
 
 root()  {
   local  R
          R="${R%.sd3}"
-         R="${R%.sd2}"
-         R="${R%.sdelta}"
-         R="${R%.sd}"
          R="${1%.7z}"
          R="${R%.bz2}"
          R="${R%.gz}"
@@ -108,18 +102,9 @@ guess()  {
   elif  [  -f  "$R.tar.bz2"    ];  then  echo  "$R.tar.bz2"
   elif  [  -f  "$R.tar.gz"     ];  then  echo  "$R.tar.gz"
   elif  [  -f  "$R.tgz"        ];  then  echo  "$R.tgz"
-  elif  [  -f  "$R.sdelta.7z"  ];  then  echo  "$R.sdelta.7z"
-  elif  [  -f  "$R.sdelta.bz2" ];  then  echo  "$R.sdelta.bz2"
-  elif  [  -f  "$R.sdelta.gz"  ];  then  echo  "$R.sdelta.gz"
   elif  [  -f  "$R.sd3.7z"     ];  then  echo  "$R.sd3.7z"
   elif  [  -f  "$R.sd3.bz2"    ];  then  echo  "$R.sd3.bz2"
   elif  [  -f  "$R.sd3.gz"     ];  then  echo  "$R.sd3.gz"
-  elif  [  -f  "$R.sd.7z"      ];  then  echo  "$R.sd.7z"
-  elif  [  -f  "$R.sd.bz2"     ];  then  echo  "$R.sd.bz2"
-  elif  [  -f  "$R.sd.gz"      ];  then  echo  "$R.sd.gz"
-  elif  [  -f  "$R.sd2.7z"     ];  then  echo  "$R.sd2.7z"
-  elif  [  -f  "$R.sd2.bz2"    ];  then  echo  "$R.sd2.bz2"
-  elif  [  -f  "$R.sd2.gz"     ];  then  echo  "$R.sd2.gz"
   elif  [  -f  "$R.7z"         ];  then  echo  "$R.7z"
   elif  [  -f  "$R.bz2"        ];  then  echo  "$R.bz2"
   elif  [  -f  "$R.gz"         ];  then  echo  "$R.gz"
@@ -154,13 +139,13 @@ translate()  {
 if    [  "$1"  == "--help" ]  ||
       ((  $#   <  3       ))
 then
-  echo      $"sd compression wrapper for sdelta"
+  echo      $"sd3 compression wrapper for sdelta3"
   echo      $"Copyright 2005 by Kyle Sallee"
   echo      $"Distributed under the terms of the SPL"
-  echo      $"See /usr/share/sdelta/LICENSE"
+  echo      $"See /usr/share/sdelta3/LICENSE"
   echo
-  echo  -e  $"To generate a patch file:  \e[32msd  \e[34mold  \e[36mnew    \e[32mpatch\e[0m"
-  echo  -e  $"To apply    a patch file:  \e[32msd  \e[34mold  \e[32mpatch  \e[36mnew\e[0m"
+  echo  -e  $"To generate a patch file:  \e[32msd3  \e[34mold  \e[36mnew    \e[32mpatch\e[0m"
+  echo  -e  $"To apply    a patch file:  \e[32msd3  \e[34mold  \e[32mpatch  \e[36mnew\e[0m"
   echo      $"Compression types that are automatically detected and supported are:"
   echo       "7za, bzip2, gzip"
   exit  1
@@ -170,15 +155,15 @@ then  translate    "$2"  "$3"
       exit  0
 fi
 
-if    !  [  -f  ${SD_MAGIC:=/usr/share/sdelta/magic}  ]
-then              SD_MAGIC=~/usr/share/sdelta/magic
+if    !  [  -f  ${SD3_MAGIC:=/usr/share/sdelta3/magic}  ]
+then              SD3_MAGIC=~/usr/share/sdelta3/magic
 fi
 
-if  !  [[  -f  $SD_MAGIC  ]]
+if  !  [[  -f  $SD3_MAGIC  ]]
 then
-  echo  $"Unable to identify sdelta patches without $SD_MAGIC installed."
-  echo  $"Please reinstall sdelta or export SD_MAGIC"
-  echo  $"to specify the location of the file containing sdelta's magic numbers."
+  echo  $"Unable to identify sdelta3 patches without $SD3_MAGIC installed."
+  echo  $"Please reinstall sdelta3 or export SD3_MAGIC"
+  echo  $"to specify the location of the file containing sdelta3's magic numbers."
 fi
 
 
@@ -195,16 +180,13 @@ R3="$(  tmp_root  "$3"  )"
 
 wait
 
-if    is_sdelta  "$D1"
+if    is_sdelta3    "$D1"
 then  R0="$R2";  D0="$D2"
       R2="$R1";  D2="$D1"
       R1="$R0";  D1="$D0"
 fi
 
-if    echo "$D2$D3" | grep -q "\.sd3"; then sdelta3 "$D1" "$D2" > "$R3"
-elif  echo "$D2$D3" | grep -q "\.sd2"; then sdelta2 "$D1" "$D2" > "$R3"
-                                       else sdelta  "$D1" "$D2" > "$R3"
-fi
+sdelta3 "$D1" "$D2" > "$R3"
 
 RET=$?
 

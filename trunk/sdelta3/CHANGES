@@ -7,8 +7,7 @@ I modified the Makefiles to automatically compile and
 link sdelta3 with available libraries that it requires.
 Few modifications are left before sdelta3 is released.
 sdreq should be modified to automatically request and
-download 7za compressed sdelta3 patches instead of
-patches in the original sdelta format.
+download 7za compressed sdelta3 patches.
 
 Unfortunately, patch production has been offline
 for at least 4 days if not more because berlios.de
@@ -32,5 +31,3 @@ sdelta and sdelta2 while eliminating the dubious overhead.
 sdelta3 demonstrates an effective delta generator
 can be created using only one sorted arrays of blocks
 in addition to the content of the files being compared.
-
-Don't forget to update sdreq for sdelta 3

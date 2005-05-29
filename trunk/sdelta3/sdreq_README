@@ -87,12 +87,11 @@ a previous source version available.
 Now make the request:
 $ sdreq  want
 It just uploaded a list of the sdelta patches
-that you will require to the ibiblio.org/sdelta server.
+that you will require to the Public Patch Repository, PPR.
 
 Assuming the sdelta patches are not uploaded to your FTP server,
 you may want to wait a while before trying to retrieve them.
-Once you receive an email from sdelta@ibiblio.org you will
-know they are ready for pickup.
+Once you receive an email you will know they are ready for pickup.
 If you elect not to receive email notification then you will
 need to wait a while before attempting to download the patches.
 Once you are ready to download them issue:
@@ -125,12 +124,12 @@ common problems with this simplistic approach to
 upgrading source tarballs.
 
 
-Q. Where does ibiblio.org/sdelta get sdelta patches from?
+Q. Where does the Public Patch Repository, PPR, get patches from?
 
 A. It makes them.
 
 
-Q. Where does ibiblio.org/sdelta get sources from?
+Q. Where does the PPR get sources from?
 
 A. It has an approved and reviewed list of servers
    that it will download sources from as necessary.
@@ -163,10 +162,9 @@ A. While unnecessary to clean ~/.sdreq/tmp you may do so
 Q. A file I want can not have a sdelta patch generated for it.
    Should I remove the empty file in the want directory?
 
-A. Yes.  However if older than 14 days it will be removed
-   in order to keep ibiblio.org/sdelta from forever trying
-   to create a patch that it can not create each time your
-   box executes sdreq  want
+A. Yes.  However if older than 14 days it will be removed automatically.
+   This keeps the PPR from forever trying to create a patch that it can
+   not create each time your box executes sdreq want.
 
 
 Q. sdreq sometimes times out or waits forever while downloading patches.
@@ -200,7 +198,7 @@ A. sdreq will order potential matches of from files by name and time.
 
 Q. I am a distribution maintainer.
    I want my distribution to provide software upgrade patches.
-   How can I use ibiblio.org/sdelta and sdreq to accomplish this?
+   How can I use the PPR and sdreq to accomplish this?
 
 A. First, have a ftp server configured to receive uploads of sdelta patches.
    Your servers will host downloads of upgrade patches.
@@ -213,7 +211,7 @@ A. First, have a ftp server configured to receive uploads of sdelta patches.
 
 Q. May I add servers to the list of trusted software hosts?
 
-A. Email sdelta@ibiblio.org and it will be examined.
+A. Email kyle.sallee@gmail.com and it will be examined.
 
 
 Q. May I have upgrade patches for .rpm, .deb, other precompiled
@@ -254,15 +252,15 @@ A. They are wasting their money for hosting more bandwidth
    speeds faster than pre-compiled distros can offer.
 
 
-Q. May I write, use, and distribute my own client for ibiblio.org/sdelta?
+Q. May I write, use, and distribute my own client for the PPR?
 
 A. If your client operates in a sane fashion according
    to the implied rules of sdelta patch generation then yes.
-   ibiblio.org/sdelta's service is monitored.
+   The PPR is monitored.
    Anyone or anything doing something odd or strange
    will receive a warning if possible and then be
    disabled or denied service if the problem persists.
 
    You may not copy any code from sdreq to use in your client.
    sdreq is under the Sorcerer Public License.
-   Please email improvements or suggestions to sdelta@ibiblio.org
+   Please email improvements or suggestions to kyle.sallee@gmail.com
