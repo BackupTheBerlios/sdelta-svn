@@ -5,17 +5,12 @@ LDFLAGS ?= -Wl,-s
 
 .PHONY: all install clean
 
-all:	sdelta3
+all: sdelta3 sdelta3-lt
 
 sdelta3 sdelta3-lt: *.c *.h
-	@if [ "$$(uname)" = 'FreeBSD' ]; then \
+	@if [ "$$(uname)" = 'FreeBSD' -a -f /usr/lib/libmd.a ]; then \
 	    extra_cflags='-DUSE_LIBMD' extra_ldflags='/usr/lib/libmd.a'; \
-	    if [ -e /usr/local/lib/libdlmalloc.so ]; then \
-		extra_ldflags="-ldlmalloc $$extra_ldflags"; \
-	    else \
-		echo '*** For optimal performance, please install'; \
-		echo '*** libdlmalloc (/usr/ports/devel/libdlmalloc)'; \
-	    fi \
+	    echo 'This seems to be a FreeBSD system... using libmd'; \
 	else \
 	    echo -n 'Checking for OpenSSL/libgcrypt... '; \
 	    if openssl version >/dev/null; then \
