@@ -27,7 +27,7 @@ sdelta3 sdelta3-lt: *.c *.h
 	    fi \
 	fi 2>/dev/null; \
 	echo -e "\nCompiling sdelta3 and sdelta3-lt with\n\n\tCFLAGS  = $(CFLAGS) $$extra_cflags\n\tLDFLAGS = $$extra_ldflags $(LDFLAGS)\n"; \
-	set -e; \
+	unset PS4; set -e -x; \
 	$(CC) $(CFLAGS) $$extra_cflags         *.c -o sdelta3    $$extra_ldflags $(LDFLAGS); \
 	$(CC) $(CFLAGS) $$extra_cflags -DLIGHT *.c -o sdelta3-lt $$extra_ldflags $(LDFLAGS)
 
