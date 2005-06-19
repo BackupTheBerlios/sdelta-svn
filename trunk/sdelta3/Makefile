@@ -1,13 +1,16 @@
-CC      := gcc
+CC      =  gcc
 PREFIX  ?= /usr
 CFLAGS  ?= -O3 -pipe
 LDFLAGS ?= -Wl,-s
+
+SRCS = blocks.c input.c sdelta3.c temp.c
+HDRS = blocks.h digest.h input.h sdelta3.h temp.h
 
 .PHONY: all install clean
 
 all: sdelta3 sdelta3-lt
 
-sdelta3 sdelta3-lt: *.c *.h
+sdelta3 sdelta3-lt: $(SRCS) $(HDRS)
 	@if [ "$$(uname)" = 'FreeBSD' -a -f /usr/lib/libmd.a ]; then \
 	    extra_cflags='-DUSE_LIBMD' extra_ldflags='/usr/lib/libmd.a'; \
 	    echo 'This seems to be a FreeBSD system... using libmd'; \
@@ -28,8 +31,8 @@ sdelta3 sdelta3-lt: *.c *.h
 	fi 2>/dev/null; \
 	echo -e "\nCompiling sdelta3 and sdelta3-lt with\n\n\tCFLAGS  = $(CFLAGS) $$extra_cflags\n\tLDFLAGS = $$extra_ldflags $(LDFLAGS)\n"; \
 	unset PS4; set -e -x; \
-	$(CC) $(CFLAGS) $$extra_cflags         *.c -o sdelta3    $$extra_ldflags $(LDFLAGS); \
-	$(CC) $(CFLAGS) $$extra_cflags -DLIGHT *.c -o sdelta3-lt $$extra_ldflags $(LDFLAGS)
+	$(CC) $(CFLAGS) $$extra_cflags         $(SRCS) -o sdelta3    $$extra_ldflags $(LDFLAGS); \
+	$(CC) $(CFLAGS) $$extra_cflags -DLIGHT $(SRCS) -o sdelta3-lt $$extra_ldflags $(LDFLAGS)
 
 clean:
 	rm -f sdelta3 sdelta3-lt
