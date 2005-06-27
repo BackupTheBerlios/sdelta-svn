@@ -1,3 +1,20 @@
+Mon Jun 27 22:47:34 UTC 2005	20050627	Kyle Sallee
+
+A new verion of file was released that 
+identifies 7za archives with a different string.
+Therefore, sd3 was updated to recgonize both how 
+the old and new versions of file report 7-zip archives.
+
+
+Wed Jun  1 05:40:29 UTC 2005	20050601	Kyle Sallee
+
+sdreq now checks for patches and optimally compressed
+source tarballs on both berlios's ftp and http servers.
+That way if the http server is down the ftp server can
+be checked to see if the desired file is already present.
+The PPR now only accepts requests for sd3 patch generation.
+
+
 Sun May 29 21:51:53 UTC 2005	20050529	Kyle Sallee
 
 The documentation now reflects sdelta3.

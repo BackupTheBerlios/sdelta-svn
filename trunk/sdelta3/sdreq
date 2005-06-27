@@ -299,8 +299,10 @@ download()  {
 #  SP="http://sdelta.berlios.de/ppr/files/patches"
 #  ST="http://sdelta.berlios.de/ppr/files/sources"
 
-  SP="ftp://ftp.berlios.de/pub/sdelta/patches"
-  ST="ftp://ftp.berlios.de/pub/sdelta/sources"
+  SP1="http://sdelta.berlios.de/ppr/files/patches"
+  ST1="http://sdelta.berlios.de/ppr/files/sources"
+  SP2="ftp://ftp.berlios.de/pub/sdelta/patches"
+  ST2="ftp://ftp.berlios.de/pub/sdelta/sources"
 
   [      -d   $SDREQ_DIR/received  ]  ||
   mkdir  -p   $SDREQ_DIR/received
@@ -312,14 +314,14 @@ download()  {
   list_empty  $SDREQ_DIR/waiting/  |
   while  read;  do
     if    [  "${REPLY:0-4}"  ==  ".tar"  ]
-    then  URL="$ST"
-    else  URL="$SP"
+    then  URL1="$ST1"; URL2="$S2"
+    else  URL2="$SP2"; URL2="$SP2"
     fi
     if  !  [  -s   "$SDREQ_DIR/received/$REPLY.7z"   ]
     then
-      if    available             "$URL/$REPLY.7z"
-      then  transfer              "$URL/$REPLY.7z"
-      else  false
+      if   available "$URL1/$REPLY.7z"; then transfer "$URL1/$REPLY.7z"
+      elif available "$URL2/$REPLY.7z"; then transfer "$URL2/$REPLY.7z"
+                                        else false
       fi  &&
       rm  -f  "$SDREQ_DIR/waiting/$REPLY"
     fi

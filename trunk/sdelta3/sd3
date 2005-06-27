@@ -8,6 +8,7 @@
 compression()  {
   case  $(  file  -b  "$1"  )  in
           7z*)  echo  "7z"    ;;
+       7-zip*)  echo  "7z"    ;;
        bzip2*)  echo  "bzip2" ;;
         gzip*)  echo  "gzip"  ;;
     compress*)  echo  "gzip"  ;;
