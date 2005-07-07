@@ -1,3 +1,10 @@
+Thu Jul  7 00:02:26 UTC 2005	20050707	Kyle Sallee
+
+Berlios squeezed out the PPR by enforcing their 99M file system quota.
+The PPR now runs at http://ppr.aakin.net
+This release updates the client for the new server location.
+
+
 Mon Jun 27 22:47:34 UTC 2005	20050627	Kyle Sallee
 
 A new verion of file was released that
