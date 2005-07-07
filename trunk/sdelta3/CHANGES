@@ -1,8 +1,8 @@
 Mon Jun 27 22:47:34 UTC 2005	20050627	Kyle Sallee
 
-A new verion of file was released that 
+A new verion of file was released that
 identifies 7za archives with a different string.
-Therefore, sd3 was updated to recgonize both how 
+Therefore, sd3 was updated to recgonize both how
 the old and new versions of file report 7-zip archives.
 
 

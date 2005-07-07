@@ -76,7 +76,7 @@ config_menu()  {
          OK=$"Select"
      CANCEL=$"Done"
        HELP=$"Please configure how sdreq should function
-Upon completion of patch generation cromwell@berlios.de 
+Upon completion of patch generation ppr@aakin.net 
 can send an email notifying pick up is ready.
 Patches can also be uploaded directly to a FTP server."
     E_HELP=$"Email address.           Example: $LOGNAME@$HOSTNAME"
@@ -109,7 +109,7 @@ config_text()  {
   local  COMMAND  OK  CANCEL  HELP
 
     HELP=$"Please configure how sdreq should function
-Upon completion of patch generation cromwell@berlios.de
+Upon completion of patch generation ppr@aakin.net
 can send an email notifying pick up is ready.
 Patches can also be uploaded directly to a FTP server."
   E_HELP=$"Email address.           Example: $LOGNAME@$HOSTNAME"
@@ -179,7 +179,7 @@ basenames()  {  sed  "s:.*[/]::"  |  sort  -u;  }
 
 post()  {
  curl  -m 60  -F "request=@$1;type=text/plain"   \
-       http://sdelta.berlios.de/ppr/request.php  |
+       http://ppr.aakin.net/request.php          |
  grep  -v "pre\>"
 }
 
@@ -294,15 +294,12 @@ available()  {
 
 
 download()  {
-  local  SP ST URL
+  local  SP1 SP2 ST1 ST2 URL1 URL2
 
-#  SP="http://sdelta.berlios.de/ppr/files/patches"
-#  ST="http://sdelta.berlios.de/ppr/files/sources"
-
-  SP1="http://sdelta.berlios.de/ppr/files/patches"
-  ST1="http://sdelta.berlios.de/ppr/files/sources"
-  SP2="ftp://ftp.berlios.de/pub/sdelta/patches"
-  ST2="ftp://ftp.berlios.de/pub/sdelta/sources"
+  SP1="http://ppr.aakin.net/files/patches"
+  ST1="http://ppr.aakin.net/files/sources"
+  SP2="http://ppr.aakin.net/files/patches"
+  ST2="http://ppr.aakin.net/files/sources"
 
   [      -d   $SDREQ_DIR/received  ]  ||
   mkdir  -p   $SDREQ_DIR/received
@@ -320,7 +317,7 @@ download()  {
     if  !  [  -s   "$SDREQ_DIR/received/$REPLY.7z"   ]
     then
       if   available "$URL1/$REPLY.7z"; then transfer "$URL1/$REPLY.7z"
-      elif available "$URL2/$REPLY.7z"; then transfer "$URL2/$REPLY.7z"
+    # elif available "$URL2/$REPLY.7z"; then transfer "$URL2/$REPLY.7z"
                                         else false
       fi  &&
       rm  -f  "$SDREQ_DIR/waiting/$REPLY"
