@@ -296,9 +296,10 @@ available()  {
 download()  {
   local  SP1 SP2 ST1 ST2 URL1 URL2
 
-  SP1="http://ppr.aakin.net/files/patches"
-  ST1="http://ppr.aakin.net/files/sources"
+  SP1="http://ppr.silverice.org"
   SP2="http://ppr.aakin.net/files/patches"
+
+  ST1="http://ppr.aakin.net/files/sources"
   ST2="http://ppr.aakin.net/files/sources"
 
   [      -d   $SDREQ_DIR/received  ]  ||
@@ -311,13 +312,13 @@ download()  {
   list_empty  $SDREQ_DIR/waiting/  |
   while  read;  do
     if    [  "${REPLY:0-4}"  ==  ".tar"  ]
-    then  URL1="$ST1"; URL2="$S2"
-    else  URL2="$SP2"; URL2="$SP2"
+    then  URL1="$ST1"; URL2="$ST2"
+    else  URL2="$SP1"; URL2="$SP2"
     fi
     if  !  [  -s   "$SDREQ_DIR/received/$REPLY.7z"   ]
     then
       if   available "$URL1/$REPLY.7z"; then transfer "$URL1/$REPLY.7z"
-    # elif available "$URL2/$REPLY.7z"; then transfer "$URL2/$REPLY.7z"
+      elif available "$URL2/$REPLY.7z"; then transfer "$URL2/$REPLY.7z"
                                         else false
       fi  &&
       rm  -f  "$SDREQ_DIR/waiting/$REPLY"
