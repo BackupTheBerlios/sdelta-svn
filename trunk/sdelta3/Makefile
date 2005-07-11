@@ -1,7 +1,7 @@
 CC      =  gcc
-PREFIX  ?= /usr
-CFLAGS  ?= -O3 -pipe
-LDFLAGS ?= -Wl,-s
+PREFIX  = /usr
+CFLAGS  = -O3 -pipe
+LDFLAGS = -Wl,-s
 
 SRCS = blocks.c input.c sdelta3.c temp.c
 HDRS = blocks.h digest.h input.h sdelta3.h temp.h
@@ -27,10 +27,10 @@ sdelta3 sdelta3-lt: $(SRCS) $(HDRS)
 		echo 'none found'; \
 		echo '*** Please install either OpenSSL or libgcrypt'; \
 		exit 1; \
-	    fi \
-	fi 2>/dev/null; \
+	    fi 2>/dev/null; \
+	fi; \
 	echo -e "\nCompiling sdelta3 and sdelta3-lt with\n\n\tCFLAGS  = $(CFLAGS) $$extra_cflags\n\tLDFLAGS = $$extra_ldflags $(LDFLAGS)\n"; \
-	unset PS4; set -e -x; \
+	unset PS4; set -e; set -x; \
 	$(CC) $(CFLAGS) $$extra_cflags         $(SRCS) -o sdelta3    $$extra_ldflags $(LDFLAGS); \
 	$(CC) $(CFLAGS) $$extra_cflags -DLIGHT $(SRCS) -o sdelta3-lt $$extra_ldflags $(LDFLAGS)
 
