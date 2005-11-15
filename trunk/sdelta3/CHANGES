@@ -1,3 +1,12 @@
+Tue Nov 15 17:35:01 UTC 2005	20051115	Kyle Sallee
+
+Fixes for compilation warnings.
+Turned off some slowing debugging counters.
+Modified default optimization from -O3 to -Os
+because it causes much faster patch generation
+by conserving memory.
+
+
 Thu Jul  7 00:02:26 UTC 2005	20050707	Kyle Sallee
 
 Berlios squeezed out the PPR by enforcing their 99M file system quota.

@@ -227,10 +227,10 @@ void  make_sdelta(INPUT_BUF *from_ibuf, INPUT_BUF *to_ibuf)  {
   QWORD			*from_q, *to_q;
   u_int32_t             *froms;
 
-/**/
+/*
   u_int64_t		sizing=0;
   u_int64_t		leaping=0;
-/**/
+*/
 
 
 #if __GNUC__ >= 4
@@ -289,9 +289,9 @@ void  make_sdelta(INPUT_BUF *from_ibuf, INPUT_BUF *to_ibuf)  {
       ceiling     =  from.ordereds;
       ceiling--;
 
-/**/
+/*
 leaping++;
-/**/
+*/
 
       while ( ceiling >= 0x800000 )
       leap(0x800000);
@@ -334,9 +334,9 @@ leaping++;
 
       while( *(u_int64_t *)(  to.buffer +   to.offset) ==
              *(u_int64_t *)(from.buffer + from.offset) ) {
-/**/
+/*
 sizing++;
-/**/
+*/
 
         count             =  1;
         from.limit        =  from.size - from.offset;
@@ -446,10 +446,10 @@ fprintf(stderr,"mat %i to %i from %i tot %i\n",
     fprintf(stderr, "Matching   bytes      %i\n", total   - limit);
     fprintf(stderr, "Umatched   bytes      %i\n", to.size - total);
     fprintf(stderr, "Tripe      bytes      %i\n", limit);
-/**/
+/*
     fprintf(stderr, "Leaping               %lli\n", leaping);
     fprintf(stderr, "Sizing                %lli\n", sizing);
-/**/
+*/
 
     if ( verbosity > 2 ) {
       hist = (unsigned int *) temp.current;

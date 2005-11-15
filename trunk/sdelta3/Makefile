@@ -1,6 +1,6 @@
 CC      =  gcc
 PREFIX  = /usr
-CFLAGS  = -O3 -pipe
+CFLAGS  = -Os -pipe
 LDFLAGS = -Wl,-s
 
 SRCS = blocks.c input.c sdelta3.c temp.c

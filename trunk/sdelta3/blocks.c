@@ -18,7 +18,7 @@ Please read LICENSE if you have not already
 #include "blocks.h"
 
 
-int  trip_byte(char b)  {
+int  trip_byte(unsigned char b)  {
 
   /* ?@ uppercase [\]^_` lowercase  okay */
   /* numbers :;                     okay */
