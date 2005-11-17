@@ -18,37 +18,6 @@ Please read LICENSE if you have not already
 #include "blocks.h"
 
 
-int  trip_byte(unsigned char b)  {
-
-  /* ?@ uppercase [\]^_` lowercase  okay */
-  /* numbers :;                     okay */
-
-  if ( ( '?' <= b ) && ( b <= 'z' ) ) return 0;  
-  if ( ( '0' <= b ) && ( b <= ';' ) ) return 0;
-
-  /* SPACE LF NULL TAB /<> NOP  trip */
-  /* Everything else            okay */
-
-  switch (b) {
-#ifndef LIGHT
-    case ' '  :
-#endif
-    case 0x0a :
-    case 0x00 :
-#ifndef LIGHT
-    case 0x09 :
-    case '/'  :
-    case '<'  : 
-#endif
-    case 0x90 : return 1; break;
-    default   : return 0; break;
-  }
-
-  return 0;
-
-}
-
-
 u_int32_t       *block_list(unsigned char *b, int s, u_int32_t *c) {
 
   u_int32_t		*list;
@@ -57,7 +26,7 @@ u_int32_t       *block_list(unsigned char *b, int s, u_int32_t *c) {
   list =  (u_int32_t *) temp.current;
 
   max  =  s - SORT_SIZE;
-  off  =  \
+  off  =
   blk  =  0;
 
   list[blk++]=off++;

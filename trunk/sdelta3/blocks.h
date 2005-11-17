@@ -104,7 +104,38 @@ typedef struct INDEX {
   u_int32_t	 naturals;
 } INDEX;
 
-int         trip_byte    (unsigned char);
+/* int         trip_byte    (unsigned char); */
+/* static inline: to be used by blocks.c & sdelta3.c */
+static inline int  trip_byte(unsigned char b)  {
+
+  /* ?@ uppercase [\]^_` lowercase  okay */
+  /* numbers :;                     okay */
+
+  /* if ( ( '?' <= b ) && ( b <= 'z' ) ) return 0;  
+  if ( ( '0' <= b ) && ( b <= ';' ) ) return 0; */
+
+  /* SPACE LF NULL TAB /<> NOP  trip */
+  /* Everything else            okay */
+
+  switch (b) {
+#ifndef LIGHT
+    case ' '  :
+#endif
+    case 0x0a :
+    case 0x00 :
+#ifndef LIGHT
+    case 0x09 :
+    case '/'  :
+    case '<'  : 
+#endif
+    case 0x90 : return 1; break;
+    default   : return 0; break;
+  }
+
+  return 0;
+}
+
+
 u_int32_t  *block_list   (unsigned char *, int,             u_int32_t *);
 void       *order_blocks (unsigned char *, u_int32_t *,     int);
 
