@@ -6,10 +6,10 @@ xdelta  was inspired by Andrew Tridgell's and Paul Mackerras's rsync.
 
 Original sdelta3 source code and endian code by Kyle Sallee.
 Additional endian/architecture/POSIX porting code was added
-by Pavel Gorshkov <svinn@gmx.net> so that sdelta3 can run 
-on FreeBSD and Solaris platforms.
+by Pavel Gorshkov <gorshkov.pavel@gmail.com> so that sdelta3
+can run on FreeBSD and Solaris platforms.
 
-input.h and input.c contributed by Pavel Gorshkov <svinn@gmx.net>
+input.h and input.c contributed by Pavel Gorshkov <gorshkov.pavel@gmail.com>
 
 Kyle Sallee also created the Sorcerer distribution of 
 GNU Linux and free software that has been providing SAs

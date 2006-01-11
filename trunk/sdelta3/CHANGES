@@ -1,3 +1,10 @@
+Wed Jan 11 16:45:59 UTC 2006	no release yet	Pavel Gorshkov
+
+Removed the support for libmd (FreeBSD-only).
+For more info, see this thread:
+http://lists.freebsd.org/pipermail/freebsd-stable/2006-January/021421.html
+
+
 Tue Nov 15 17:35:01 UTC 2005	20051115	Kyle Sallee
 
 Fixes for compilation warnings.

@@ -11,24 +11,19 @@ HDRS = blocks.h digest.h input.h sdelta3.h temp.h
 all: sdelta3 sdelta3-lt
 
 sdelta3 sdelta3-lt: $(SRCS) $(HDRS)
-	@if [ "$$(uname)" = 'FreeBSD' -a -f /usr/lib/libmd.a ]; then \
-	    extra_cflags='-DUSE_LIBMD' extra_ldflags='/usr/lib/libmd.a'; \
-	    echo 'This seems to be a FreeBSD system... using libmd'; \
+	@echo -n 'Checking for OpenSSL/libgcrypt... '; \
+	if openssl version >/dev/null; then \
+	    extra_ldflags='-lcrypto'; \
+	    echo 'using OpenSSL'; \
+	elif libgcrypt-config --version >/dev/null; then \
+	    extra_cflags='-DUSE_LIBGCRYPT' \
+	    extra_ldflags="$$(libgcrypt-config --libs)"; \
+	    echo 'using libgcrypt'; \
 	else \
-	    echo -n 'Checking for OpenSSL/libgcrypt... '; \
-	    if openssl version >/dev/null; then \
-		extra_ldflags='-lcrypto'; \
-		echo 'using OpenSSL'; \
-	    elif libgcrypt-config --version >/dev/null; then \
-		extra_cflags='-DUSE_LIBGCRYPT' \
-		extra_ldflags="$$(libgcrypt-config --libs)"; \
-		echo 'using libgcrypt'; \
-	    else \
-		echo 'none found'; \
-		echo '*** Please install either OpenSSL or libgcrypt'; \
-		exit 1; \
-	    fi 2>/dev/null; \
-	fi; \
+	    echo 'none found'; \
+	    echo '*** Please install either OpenSSL or libgcrypt'; \
+	    exit 1; \
+	fi 2>/dev/null; \
 	echo -e "\nCompiling sdelta3 and sdelta3-lt with\n\n\tCFLAGS  = $(CFLAGS) $$extra_cflags\n\tLDFLAGS = $$extra_ldflags $(LDFLAGS)\n"; \
 	unset PS4; set -e; set -x; \
 	$(CC) $(CFLAGS) $$extra_cflags         $(SRCS) -o sdelta3    $$extra_ldflags $(LDFLAGS); \

@@ -9,12 +9,8 @@
 #define DECLARE_DIGEST_VARS
 #define GET_DIGEST(buf, sz, res) \
     gcry_md_hash_buffer(GCRY_MD_SHA1, (res), (buf), (sz))
-#else /* OpenSSL or libmd */
-#ifdef USE_LIBMD
-#include <sha.h>
-#else
+#else /* OpenSSL */
 #include <openssl/sha.h>
-#endif
 #define DECLARE_DIGEST_VARS \
     SHA_CTX ctx
 #define GET_DIGEST(buf, sz, res) do { \
