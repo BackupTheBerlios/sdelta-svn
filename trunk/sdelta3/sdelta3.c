@@ -263,7 +263,7 @@ void  make_sdelta(INPUT_BUF *from_ibuf, INPUT_BUF *to_ibuf)  {
   to.ceiling  =   to.size - 0x1000;
 */
 
-  if ( MAX(MIN(from.size, to.size),0xfff) == 0x3fff) {
+  if ( MAX(MIN(from.size, to.size), 0x3fff) == 0x3fff) {
     fprintf(stderr,  "Files must be at least 16K each for patch production.\n");
     exit(EXIT_FAILURE);
   }
@@ -480,10 +480,8 @@ void   make_to(INPUT_BUF *from_ibuf, INPUT_BUF *found_ibuf)  {
   FOUND			found;
   FROM			from, delta;
   TO			to;
-  DWORD			*dwp, stretch;
-  unsigned char		control;
-  u_int32_t		block;
-  u_int32_t		size;
+  DWORD			*dwp, stretch, size, from_off;
+  unsigned char		*p;
   DECLARE_DIGEST_VARS;
 
   if (from_ibuf) {
@@ -499,69 +497,43 @@ void   make_to(INPUT_BUF *from_ibuf, INPUT_BUF *found_ibuf)  {
   found.size    =  found_ibuf->size;
 
   if  ( memcmp(found.buffer, magic, 4) != 0 ) {
-    fprintf(stderr, "Input on stdin did not start with sdelta magic.\n");
-    fprintf(stderr, "Hint: cat sdelta_file from_file | sdelta  > to_file\n");
+    fprintf(stderr, "The input did not start with sdelta3 magic.\n");
+    fprintf(stderr, "Hint: sdelta3 from_file sdelta3_file > to_file\n");
+    fprintf(stderr, "  or: cat sdelta3_file from_file | sdelta3 > to_file\n");
     exit(EXIT_FAILURE);
   }
 
-  found.offset       =  4 + 2 * DIGEST_SIZE;  /* Skip the magic and 2 sha1 */
+  p = found.buffer + 4 + 2*DIGEST_SIZE;  /* Skip the magic and 2 sha1 */
   dwp                =  (DWORD *)&to.size;
-  dwp->byte.b3       =  found.buffer[found.offset++];
-  dwp->byte.b2       =  found.buffer[found.offset++];
-  dwp->byte.b1       =  found.buffer[found.offset++];
-  dwp->byte.b0       =  found.buffer[found.offset++];
-  found.count        =  0;
-  to.offset          =  0;
+  dwp->byte.b3       =  *p++;
+  dwp->byte.b2       =  *p++;
+  dwp->byte.b1       =  *p++;
+  dwp->byte.b0       =  *p++;
 
-  found.pair         = (PAIR *) temp.current;
-  found.count        =  0;
-  found.offset       =  8 + 2 * DIGEST_SIZE;
-  /* Skip the magic and 2 sha1 and to size */
+  /* find the last PAIR (triple) */
+  for (p += 4; *(u_int32_t *)p; p += 12)
+      ;
 
-  size          =  1;
-  while ( size !=  0 ) {
-
-    stretch.byte.b3 = found.buffer[found.offset++];
-    stretch.byte.b2 = found.buffer[found.offset++];
-    stretch.byte.b1 = found.buffer[found.offset++];
-    stretch.byte.b0 = found.buffer[found.offset++];
-
-    to.offset += stretch.dword;
-
-    found.pair[found.count].size.byte.b3 = found.buffer[found.offset++];
-    found.pair[found.count].size.byte.b2 = found.buffer[found.offset++];
-    found.pair[found.count].size.byte.b1 = found.buffer[found.offset++];
-    found.pair[found.count].size.byte.b0 = found.buffer[found.offset++];
-
-    found.pair[found.count].from.byte.b3 = found.buffer[found.offset++];
-    found.pair[found.count].from.byte.b2 = found.buffer[found.offset++];
-    found.pair[found.count].from.byte.b1 = found.buffer[found.offset++];
-    found.pair[found.count].from.byte.b0 = found.buffer[found.offset++];
-
-    found.pair[found.count].to.dword     = to.offset;
-    to.offset +=  size =  found.pair[found.count++].size.dword;
-
-  };
-
-  temp.current += sizeof(PAIR) * found.count;
-
+  p += 8;
   dwp           =  (DWORD *)&delta.size;
-  dwp->byte.b3  =  found.buffer[found.offset++];
-  dwp->byte.b2  =  found.buffer[found.offset++];
-  dwp->byte.b1  =  found.buffer[found.offset++];
-  dwp->byte.b0  =  found.buffer[found.offset++];
+  dwp->byte.b3  =  *p++;
+  dwp->byte.b2  =  *p++;
+  dwp->byte.b1  =  *p++;
+  dwp->byte.b0  =  *p++;
 
-  delta.buffer  =  found.buffer + found.offset;
+  delta.buffer = p;
+
   if  ( from.buffer == NULL )  {
-           from.buffer  =  found.buffer + found.offset + delta.size;
-           from.size    =  found.size   - found.offset - delta.size;
-          found.size    =  found.size   - from.size    - (4 + DIGEST_SIZE);
-  } else  found.size   -=  4 + DIGEST_SIZE;
-
-  GET_DIGEST(from.buffer, from.size, from.digest);
+    from.buffer = delta.buffer + delta.size;
+    from.size   = found.size   - (delta.buffer - found.buffer) - delta.size;
+    found.size -= from.size;
+  }
   
+  found.size -= 4 + DIGEST_SIZE;
+ 
+  GET_DIGEST(from.buffer, from.size, from.digest);
   GET_DIGEST(found.buffer + 4 + DIGEST_SIZE, found.size, found.digest);
-	    
+  
   if  ( memcmp( found.digest, found.buffer + 4, DIGEST_SIZE ) != 0 ) {
     fprintf(stderr, "The sha1 for this sdelta did not match.\nAborting.\n");
     exit(EXIT_FAILURE);
@@ -572,27 +544,29 @@ void   make_to(INPUT_BUF *from_ibuf, INPUT_BUF *found_ibuf)  {
     exit(EXIT_FAILURE);
   }
 
-
-  delta.offset  =  0;
-   from.offset  =  0;
-     to.offset  =  0;
-  delta.offset  =  0;
-
-  for ( block = 0; block < found.count; block++ ) {
-
-    stretch.dword = found.pair[block].to.dword - to.offset;
-    if ( stretch.dword > 0 ) {
-      write( 1, delta.buffer + delta.offset, stretch.dword );
-      delta.offset += stretch.dword;
-         to.offset += stretch.dword;
-    }
-
-    size        = found.pair[block].size.dword;
-    from.offset = found.pair[block].from.dword;
-    write( 1, from.buffer + from.offset, size );
-
-    to.offset  += size;
-  }
+  delta.offset = 0;
+  p = found.buffer + 4 + 2*DIGEST_SIZE + 4;
+  do {
+      stretch.byte.b3 = *p++;
+      stretch.byte.b2 = *p++;
+      stretch.byte.b1 = *p++;
+      stretch.byte.b0 = *p++;
+      size.byte.b3 = *p++;
+      size.byte.b2 = *p++;
+      size.byte.b1 = *p++;
+      size.byte.b0 = *p++;
+      from_off.byte.b3 = *p++;
+      from_off.byte.b2 = *p++;
+      from_off.byte.b1 = *p++;
+      from_off.byte.b0 = *p++;
+      
+      if (stretch.dword) {
+	  fwrite(delta.buffer + delta.offset, 1, stretch.dword, stdout);
+	  delta.offset += stretch.dword;
+      }
+      
+      fwrite(from.buffer + from_off.dword, 1, size.dword, stdout);
+  } while (size.dword);
 
   if (from_ibuf)
       unload_buf(from_ibuf);
@@ -601,22 +575,22 @@ void   make_to(INPUT_BUF *from_ibuf, INPUT_BUF *found_ibuf)  {
 
 
 void  help(void)  {
-  printf("\nsdelta3 designed programmed and copyrighted by\n");
-  printf("Kyle Sallee in 2004, 2005, All Rights Reserved.\n");
-  printf("sdelta3 is distributed under the Sorcerer Public License version 1.1\n");
-  printf("Please read /usr/doc/sdelta/LICENSE\n\n");
+  fprintf(stderr, "\nsdelta3 designed programmed and copyrighted by\n");
+  fprintf(stderr, "Kyle Sallee in 2004, 2005, All Rights Reserved.\n");
+  fprintf(stderr, "sdelta3 is distributed under the Sorcerer Public License version 1.1\n");
+  fprintf(stderr, "Please read /usr/doc/sdelta/LICENSE\n\n");
 
-  printf("sdelta records the differences between source tarballs.\n");
-  printf("First, sdelta3 can make a delta patch between two files.\n");
-  printf("Then,  sdelta3 can make the second file when given both\n");
-  printf("the previously generated delta file and the first file.\n\n");
+  fprintf(stderr, "sdelta records the differences between source tarballs.\n");
+  fprintf(stderr, "First, sdelta3 can make a delta patch between two files.\n");
+  fprintf(stderr, "Then,  sdelta3 can make the second file when given both\n");
+  fprintf(stderr, "the previously generated delta file and the first file.\n\n");
 
-  printf("Below is an example to make a bzip2 compressed sdelta patch file.\n\n");
-  printf("$ sdelta3 linux-2.6.7.tar linux-2.6.8.1.tar > linux-2.6.7-2.6.8.1.tar.sd3\n");
-  printf("$ bzip2   linux-2.6.7-2.6.8.1.tar.sd3\n\n\n");
-  printf("Below is an example for making linux-2.6.8.1.tar\n\n");
-  printf("$ bunzip2 linux-2.6.7-2.6.8.1.tar.sd3.bz2\n");
-  printf("$ sdelta3 linux-2.6.7.tar linux-2.6.7-2.6.8.1.tar.sd3 > linux-2.6.8.1.tar\n");
+  fprintf(stderr, "Below is an example to make a bzip2 compressed sdelta patch file.\n\n");
+  fprintf(stderr, "$ sdelta3 linux-2.6.7.tar linux-2.6.8.1.tar > linux-2.6.7-2.6.8.1.tar.sd3\n");
+  fprintf(stderr, "$ bzip2   linux-2.6.7-2.6.8.1.tar.sd3\n\n\n");
+  fprintf(stderr, "Below is an example for making linux-2.6.8.1.tar\n\n");
+  fprintf(stderr, "$ bunzip2 linux-2.6.7-2.6.8.1.tar.sd3.bz2\n");
+  fprintf(stderr, "$ sdelta3 linux-2.6.7.tar linux-2.6.7-2.6.8.1.tar.sd3 > linux-2.6.8.1.tar\n");
   exit(EXIT_FAILURE);
 }
 
@@ -628,8 +602,11 @@ void  parse_parameters( char *f1, char *f2)  {
   load_buf(f2, &b2);
 
   if ( memcmp( b2.buf, magic, 4 ) == 0 ) {
-    init_temp(MAX(b1.size, b2.size));      make_to     (&b1, &b2); } else {
-    init_temp(MAX(b1.size, b2.size)*3/2);  make_sdelta (&b1, &b2); }
+    make_to(&b1, &b2);
+  } else {
+    init_temp(MAX(b1.size, b2.size)*3/2);
+    make_sdelta(&b1, &b2);
+  }
 
 }
 
@@ -637,7 +614,7 @@ void  parse_parameters( char *f1, char *f2)  {
 void  parse_stdin(void) {
   INPUT_BUF b;
 
-  load_buf(NULL, &b);  init_temp(b.size);
+  load_buf(NULL, &b);
   make_to (NULL, &b);
 } 
 

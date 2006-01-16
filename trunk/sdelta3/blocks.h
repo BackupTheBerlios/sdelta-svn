@@ -137,7 +137,7 @@ static inline int  trip_byte(unsigned char b)  {
 
 
 u_int32_t  *block_list   (unsigned char *, int,             u_int32_t *);
-void       *order_blocks (unsigned char *, u_int32_t *,     int);
+void        order_blocks (unsigned char *, u_int32_t *,     int);
 
 void        make_index          (INDEX         *, unsigned char *, int);
 

@@ -68,7 +68,7 @@ u_int32_t       *block_list(unsigned char *b, int s, u_int32_t *c) {
 
 
 
-void  *order_blocks ( unsigned char *b, u_int32_t *n, int c ) {
+void  order_blocks ( unsigned char *b, u_int32_t *n, int c ) {
 
 #if __GNUC__ >= 4
   auto   int compare_mem (const void *v0, const void *v1)  {
