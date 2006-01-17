@@ -1,3 +1,10 @@
+Tue Jan 17 15:19:46 UTC 2006	20060117	Pavel Gorshkov
+
+Improved make_to().
+Various cosmetic changes, mostly printf => fprintf(stderr
+Fixes for compilation warnings.
+
+
 Wed Jan 11 16:45:59 UTC 2006	no release yet	Pavel Gorshkov
 
 Removed the support for libmd (FreeBSD-only).
@@ -45,12 +52,12 @@ Updated the sdreq client and sd3 wrapper.
 sd was renamed sd3.
 This release should be good for use with
 the PPR if I did not bug sd3 or sdreq.
-Finally, we can all enjoy the smaller 
+Finally, we can all enjoy the smaller
 7za compressed sdelta3 patches.
 
 Cron is still not running at berlios.
 Patches generation may take up to 24
-hours depending on whether I am 
+hours depending on whether I am
 manually running the server.
 
 
@@ -68,7 +75,7 @@ download 7za compressed sdelta3 patches.
 Unfortunately, patch production has been offline
 for at least 4 days if not more because berlios.de
 has neglected starting cron.
-Patch production is dependent on cron 
+Patch production is dependent on cron
 running and their http server working.
 Neither have been dependable recently.
 Anyone know a good home for the PPR?
