@@ -80,39 +80,6 @@ uncompress_name()  {
 }
 
 
-compress()  {
-  local  S7Z  SBZ
-  local  FBZ  F7Z  TMP  DST
-
-  rm  -f  "$2"
-
-  DST="$2"
-  TMP="$2.new"
-
-  case  "${2##*.}"  in
-       7z)  7za     a   -si  "$TMP"    <  "$1"  2>/dev/null ;;
-      bz2)  bzip2  -9c    >  "$TMP"    <  "$1"  ;;
-       gz)  gzip   -9c    >  "$TMP"    <  "$1"  ;;
-      tgz)  gzip   -9c    >  "$TMP"    <  "$1"  ;;
-      max)  FBZ="${TMP%.*}";  F7Z="${FBZ}.7z";  FBZ="${FBZ}.bz2"
-            7za    a    -si  "$F7Z"    <  "$1"  2>/dev/null  &
-            bzip2  -9c    >  "$FBZ"    <  "$1"  &
-            wait
-            S7Z=$( stat      "$F7Z"  -c "%s"  )
-            SBZ=$( stat      "$FBZ"  -c "%s"  )
-            if    ((  S7Z > SBZ ))
-            then  rm  -f  "$F7Z";  TMP="$FBZ";  DST="${2%.*}.bz2"
-            else  rm  -f  "$FBZ";  TMP="$F7Z";  DST="${2%.*}.7z"
-            fi  ;;
-        *)  mv      "$1"     "$TMP"  ;;
-  esac  &&  rm  -f  "$1"
-  if    [  -f  "$TMP"  ]
-  then  mv     "$TMP"  "$DST"
-  else  false
-  fi
-}
-
-
 guess()  {
   local  R
     R="$(  root  "$1"  )"
