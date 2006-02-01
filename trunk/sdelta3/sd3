@@ -5,6 +5,26 @@
 # See /usr/share/sdelta3/LICENSE
 
 
+compress_out()  {
+  rd12()  {
+    if  [  "$R1"  !=  "$D1"  ];  then  rm  -f  "$D1";  fi
+    if  [  "$R2"  !=  "$D2"  ];  then  rm  -f  "$D2";  fi
+  }
+
+  if  case  "${D3##*.}"  in
+        7z)   7za    a  -si     "$R3"  2>/dev/null ;;
+        bz2)  bzip2     -9c  >  "$R3"              ;;
+        gz)   gzip      -9c  >  "$R3"              ;;
+        tgz)  gzip      -9c  >  "$R3"              ;;
+        *)    cat            >  "$R3"              ;;
+      esac
+  then  rd12;  mv      "$R3"  "$D3"
+  else  rd12;  rm  -f  "$R3"
+        false
+  fi
+}
+
+
 compression()  {
   case  $(  file  -b  "$1"  )  in
           7z*)  echo  "7z"    ;;
@@ -115,23 +135,31 @@ guess()  {
 
 
 translate()  {
+  local  OUT="$2.partial.$RANDOM$RANDOM"
+
   if      [   "${1}"      !=  "${2}"      ];  then
     if    [   "${1:0-4}"  ==  "${2:0-4}"  ]
     then  cp  "${1}"          "${2}"
     else
-      case  $(  compression    "$1"  )  in
-           7z)  7za    x  -so  "$1"  2>/dev/null  ;;
-        bzip2)  bzip2     -cd  "$1"  ;;
-         gzip)  gzip      -cd  "$1"  ;;
-          tar)  cat            "$1"  ;;
-      esac  |
-      case  "${2##*.}"  in
-         7z)  7za     a   -si  "$2"  2>/dev/null ;;
-        bz2)  bzip2  -9c    >  "$2"  ;;
-         gz)  gzip   -9c    >  "$2"  ;;
-        tgz)  gzip   -9c    >  "$2"  ;;
-        tar)  cat    -      >  "$2"  ;;
-      esac
+      if  case  $(  compression     "$1"  )  in
+            7z)     7za    x  -so   "$1"  2>/dev/null  ;;
+            bzip2)  bzip2     -cd   "$1"  ;;
+            gzip)   gzip      -cd   "$1"  ;;
+            tar)    cat             "$1"  ;;
+          esac
+      then  true
+      else  rm  -f  "$OUT";  false
+      fi  |
+      if  case  "${2##*.}"  in
+            7z)   7za     a   -si  "$OUT"  2>/dev/null ;;
+            bz2)  bzip2  -9c    >  "$OUT"  ;;
+            gz)   gzip   -9c    >  "$OUT"  ;;
+            tgz)  gzip   -9c    >  "$OUT"  ;;
+            tar)  cat    -      >  "$OUT"  ;;
+          esac
+      then  mv      "$OUT"  "$2"
+      else  rm  -f  "$OUT";  false
+      fi
     fi
   fi
 }
@@ -177,7 +205,7 @@ uncompress "$R1"  "$D1"  &
 uncompress "$R2"  "$D2"  &
 
 D3="$3"
-R3="$(  tmp_root  "$3"  )"
+R3="$1.partial.$RANDOM$RANDOM"
 
 wait
 
@@ -187,12 +215,7 @@ then  R0="$R2";  D0="$D2"
       R1="$R0";  D1="$D0"
 fi
 
-sdelta3 "$D1" "$D2" > "$R3"
 
-RET=$?
-
-if    [  "$R1"  !=  "$D1"  ];  then  rm  -f           "$D1";  fi
-if    [  "$R2"  !=  "$D2"  ];  then  rm  -f           "$D2";  fi
-if    ((  RET   ==  0     ));  then  compress  "$R3"  "$D3";
-                               else  rm  -f    "$R3"       ;  exit  $RET
-fi
+if    !  sdelta3 "$D1" "$D2"
+then     rm  -f  "$R3";  false
+fi    |  compress_out
