@@ -1,13 +1,13 @@
 /*
 
 sdelta3.c was written and copyrighted by Kyle Sallee
-You may use it in accordance with the 
+You may use it in accordance with the
 Sorcerer Public License version 1.1
 Please read LICENSE
 
 sdelta3 can identify and combine the difference between two files.
 The difference, also called a delta, can be saved to a file.
-Then, the second of two files can be generated 
+Then, the second of two files can be generated
 from both the delta and first source file.
 
 sdelta3 is a word blocking dictionary compressor.
@@ -45,8 +45,7 @@ int	verbosity  =  0;
 
 
 void  favor_adjacent_found(FOUND f) {
-  int  loop, s, z;
-  int  max;
+  int  loop, max;
 
   f.offset = 0;
 
@@ -126,13 +125,11 @@ u_int32_t       remove_tripe_found(FOUND f) {
 
 void	output_sdelta(FOUND found, TO to, FROM from) {
 
-  DWORD			size, origin, stretch, unmatched_size, slack;
-  unsigned char		byte_val;
+  DWORD			size, origin, stretch, unmatched_size;
   int			block;
   DWORD			*dwp;
   unsigned int		offset_unmatched_size;
   DECLARE_DIGEST_VARS;
-  unsigned char		*here, *there;
 
   found.buffer   =  (unsigned char *)  temp.current;
 
@@ -213,6 +210,13 @@ fprintf(stderr,"blk %i  to %i  stretch %i\n", block, to.offset, stretch.dword);
 }
 
 
+static int compare_pair (const void *v0, const void *v1)  {
+    PAIR *p0, *p1;
+    p0 = (PAIR *)v0;
+    p1 = (PAIR *)v1;
+    return  p0->to.dword - p1->to.dword;
+}
+
 void  make_sdelta(INPUT_BUF *from_ibuf, INPUT_BUF *to_ibuf)  {
   FROM			from;
   TO			to;
@@ -220,38 +224,15 @@ void  make_sdelta(INPUT_BUF *from_ibuf, INPUT_BUF *to_ibuf)  {
   FOUND			found;
   unsigned int		count, total, where, ceiling, basement;
   int                   limit, resize;
-  u_int16_t		tag;
   DECLARE_DIGEST_VARS;
   unsigned int          *hist;
   unsigned char		*here, *there;
   QWORD			*from_q, *to_q;
-  u_int32_t             *froms;
 
 /*
   u_int64_t		sizing=0;
   u_int64_t		leaping=0;
 */
-
-
-#if __GNUC__ >= 4
-  auto   int compare_dword (const void *v0, const void *v1)  {
-#else
-  static int compare_dword (const void *v0, const void *v1)  {
-#endif
-    return  *(u_int32_t *)v0 - *(u_int32_t *)v1;
-  }
-
-#if __GNUC__ >= 4
-  auto   int compare_pair (const void *v0, const void *v1)  {  
-#else
-  static int compare_pair (const void *v0, const void *v1)  {
-#endif
-    PAIR *p0, *p1;
-    p0 = (PAIR *)v0;
-    p1 = (PAIR *)v1;
-    return  p0->to.dword - p1->to.dword;
-  }
-
 
   from.buffer = from_ibuf->buf;
   to.buffer   =   to_ibuf->buf;
@@ -349,7 +330,7 @@ sizing++;
              (  from_q[match.blocks].qword ==
                   to_q[match.blocks].qword ) )
           while  ( ( limit > count )  &&
-                   ( from_q[count].qword == 
+                   ( from_q[count].qword ==
                        to_q[count].qword ) )
             count++;
 
@@ -400,8 +381,8 @@ sizing++;
         found.pair[found.count].from.dword    =  match.from;
         found.pair[found.count].size.dword    =  match.total;
 /*
-fprintf(stderr,"mat %i to %i from %i tot %i\n", 
-        found.count, match.to, 
+fprintf(stderr,"mat %i to %i from %i tot %i\n",
+        found.count, match.to,
         match.from, match.total);
 */
         found.count++;
@@ -440,11 +421,11 @@ fprintf(stderr,"mat %i to %i from %i tot %i\n",
       }
 
     fprintf(stderr, "Generation Statistics.\n");
-    fprintf(stderr, "Searchable sequences  %i\n", from.ordereds);
-    fprintf(stderr, "Matched    sequences  %i\n", found.count - count);
-    fprintf(stderr, "Tripe      sequences  %i\n", count);
-    fprintf(stderr, "Matching   bytes      %i\n", total   - limit);
-    fprintf(stderr, "Umatched   bytes      %i\n", to.size - total);
+    fprintf(stderr, "Searchable sequences  %u\n", from.ordereds);
+    fprintf(stderr, "Matched    sequences  %u\n", found.count - count);
+    fprintf(stderr, "Tripe      sequences  %u\n", count);
+    fprintf(stderr, "Matching   bytes      %u\n", total   - limit);
+    fprintf(stderr, "Umatched   bytes      %u\n", to.size - total);
     fprintf(stderr, "Tripe      bytes      %i\n", limit);
 /*
     fprintf(stderr, "Leaping               %lli\n", leaping);
@@ -459,10 +440,10 @@ fprintf(stderr,"mat %i to %i from %i tot %i\n",
           if (found.pair[where].size.dword >= 0x10000)
             hist[0]++;  else
             hist[found.pair[where].size.dword]++;
-      fprintf(stderr,"Matches of size >= 65536  %i\n", hist[0]);
+      fprintf(stderr,"Matches of size >= 65536  %u\n", hist[0]);
       for(where = 1; where < 0x10000; where++)
         if( hist[where] > 0 )
-          fprintf(stderr, "Matches of size %i  %i\n", where, hist[where]);
+          fprintf(stderr, "Matches of size %u  %u\n", where, hist[where]);
     }
   }
 
@@ -492,7 +473,7 @@ void   make_to(INPUT_BUF *from_ibuf, INPUT_BUF *found_ibuf)  {
       from.buffer  =  NULL;
       from.size    =  0;
   }
-  
+
   found.buffer  =  found_ibuf->buf;
   found.size    =  found_ibuf->size;
 
@@ -528,12 +509,12 @@ void   make_to(INPUT_BUF *from_ibuf, INPUT_BUF *found_ibuf)  {
     from.size   = found.size   - (delta.buffer - found.buffer) - delta.size;
     found.size -= from.size;
   }
-  
+
   found.size -= 4 + DIGEST_SIZE;
- 
+
   GET_DIGEST(from.buffer, from.size, from.digest);
   GET_DIGEST(found.buffer + 4 + DIGEST_SIZE, found.size, found.digest);
-  
+
   if  ( memcmp( found.digest, found.buffer + 4, DIGEST_SIZE ) != 0 ) {
     fprintf(stderr, "The sha1 for this sdelta did not match.\nAborting.\n");
     exit(EXIT_FAILURE);
@@ -559,13 +540,19 @@ void   make_to(INPUT_BUF *from_ibuf, INPUT_BUF *found_ibuf)  {
       from_off.byte.b2 = *p++;
       from_off.byte.b1 = *p++;
       from_off.byte.b0 = *p++;
-      
+
       if (stretch.dword) {
-	  fwrite(delta.buffer + delta.offset, 1, stretch.dword, stdout);
+	  if (stretch.dword != fwrite(delta.buffer + delta.offset, 1, stretch.dword, stdout)) {
+	      fprintf(stderr, "sdelta3: make_to: couldn't write %u bytes to stdout\n", stretch.dword);
+	      exit(EXIT_FAILURE);
+	  }
 	  delta.offset += stretch.dword;
       }
-      
-      fwrite(from.buffer + from_off.dword, 1, size.dword, stdout);
+
+      if (size.dword != fwrite(from.buffer + from_off.dword, 1, size.dword, stdout)) {
+	  fprintf(stderr, "sdelta3: make_to: couldn't write %u bytes to stdout\n", size.dword);
+	  exit(EXIT_FAILURE);
+      }
   } while (size.dword);
 
   if (from_ibuf)
@@ -616,13 +603,13 @@ void  parse_stdin(void) {
 
   load_buf(NULL, &b);
   make_to (NULL, &b);
-} 
+}
 
 
 int	main	(int argc, char **argv)  {
 
   if  ( NULL !=  getenv("SDELTA_VERBOSE") )
-    sscanf(      getenv("SDELTA_VERBOSE"), "%i", &verbosity );  
+    sscanf(      getenv("SDELTA_VERBOSE"), "%i", &verbosity );
 
   switch (argc) {
     case  3 :  parse_parameters(argv[1], argv[2]);  break;

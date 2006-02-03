@@ -67,19 +67,13 @@ u_int32_t       *block_list(unsigned char *b, int s, u_int32_t *c) {
 }
 
 
+static unsigned char *qsort_base;
+static int compare_mem (const void *v0, const void *v1)  {
+    return  memcmp ( qsort_base + *(u_int32_t *)v0,
+                     qsort_base + *(u_int32_t *)v1, SORT_SIZE );
+}
 
 void  order_blocks ( unsigned char *b, u_int32_t *n, int c ) {
-
-#if __GNUC__ >= 4
-  auto   int compare_mem (const void *v0, const void *v1)  {
-#else
-  static int compare_mem (const void *v0, const void *v1)  {
-#endif
-
-    return  memcmp ( b + *(u_int32_t *)v0,
-                     b + *(u_int32_t *)v1, SORT_SIZE );
-  }
-
 /*
    90% of the time or more during sdelta3 is
    spent sorting the "from file" block list.
@@ -93,6 +87,7 @@ void  order_blocks ( unsigned char *b, u_int32_t *n, int c ) {
    the amount of elements in the block list.
 */
 
+  qsort_base = b;
   qsort(n, c, sizeof(u_int32_t), compare_mem);
   return;
 }

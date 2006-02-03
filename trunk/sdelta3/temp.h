@@ -10,9 +10,10 @@
 #include <stdlib.h>
 
 typedef struct TEMP {
-  void	*start, *current;
-  int	size;
-  FILE	*tfp;
+  unsigned char	*start,
+		*current;
+  int		size;
+  FILE		*tfp;
 } TEMP;
 
 TEMP temp;
