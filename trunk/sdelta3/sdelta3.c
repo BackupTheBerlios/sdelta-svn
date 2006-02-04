@@ -32,16 +32,18 @@ char    magic[]    =  { 0x13, 0x04, 00, 02 };
 int	verbosity  =  0;
 
 
-#define  leap(frog)                            \
-  if ( ceiling >= frog ) {                     \
-    from.offset = from.ordered[where + frog];  \
-    if ( memcmp(   to.buffer + to.offset,      \
-                 from.buffer + from.offset,    \
-                 SORT_SIZE ) > 0 ) {           \
-            where    +=  frog;                 \
-            ceiling  -=  frog;                 \
-    } else  ceiling   =  frog - 1;             \
-  }
+#define  LEAP(frog)                               \
+  do {                                            \
+    if ( ceiling >= (frog) ) {                    \
+      from.offset = from.ordered[where + (frog)]; \
+      if ( memcmp(   to.buffer + to.offset,       \
+                   from.buffer + from.offset,     \
+                   SORT_SIZE ) > 0 ) {            \
+              where    +=  (frog);                \
+              ceiling  -=  (frog);                \
+      } else  ceiling   =  (frog) - 1;            \
+  }                                               \
+} while(0)
 
 
 void  favor_adjacent_found(FOUND f) {
@@ -118,9 +120,13 @@ u_int32_t       remove_tripe_found(FOUND f) {
 }
 
 
-#define  next_offset()  \
-    while ((to.ceiling > to.offset) && ! (trip_byte(to.buffer[to.offset++]))); \
-    while ((to.ceiling > to.offset) &&   (trip_byte(to.buffer[to.offset  ]))) to.offset++;
+#define  NEXT_OFFSET()                                                        \
+  do {                                                                        \
+    while ((to.ceiling > to.offset) && ! (trip_byte(to.buffer[to.offset++]))) \
+      ;                                                                       \
+    while ((to.ceiling > to.offset) &&   (trip_byte(to.buffer[to.offset  ]))) \
+      to.offset++;                                                            \
+  } while(0)
 
 
 void	output_sdelta(FOUND found, TO to, FROM from) {
@@ -275,30 +281,31 @@ leaping++;
 */
 
       while ( ceiling >= 0x800000 )
-      leap(0x800000);
-      leap(0x400000);
-      leap(0x200000);
-      leap(0x100000);
-      leap(0x80000);
-      leap(0x40000);
-      leap(0x20000);
-      leap(0x10000);
-      leap(0x8000);
-      leap(0x4000);
-      leap(0x2000);
-      leap(0x1000);
-      leap(0x800);
-      leap(0x400);
-      leap(0x200);
-      leap(0x100);
-      leap(0x80);
-      leap(0x40);
-      leap(0x20);
-      leap(0x10);
-      leap(0x8);
-      leap(0x4);
-      leap(0x2);
-      leap(0x1);
+        LEAP(0x800000);
+
+      LEAP(0x400000);
+      LEAP(0x200000);
+      LEAP(0x100000);
+      LEAP(0x80000);
+      LEAP(0x40000);
+      LEAP(0x20000);
+      LEAP(0x10000);
+      LEAP(0x8000);
+      LEAP(0x4000);
+      LEAP(0x2000);
+      LEAP(0x1000);
+      LEAP(0x800);
+      LEAP(0x400);
+      LEAP(0x200);
+      LEAP(0x100);
+      LEAP(0x80);
+      LEAP(0x40);
+      LEAP(0x20);
+      LEAP(0x10);
+      LEAP(0x8);
+      LEAP(0x4);
+      LEAP(0x2);
+      LEAP(0x1);
 
       from.offset = from.ordered[where];
 
@@ -390,8 +397,8 @@ fprintf(stderr,"mat %i to %i from %i tot %i\n",
           to.offset = match.to + match.total - 1;
           basement  =  match.total +  match.to;
         }
-              next_offset();
-      } else  next_offset();
+              NEXT_OFFSET();
+      } else  NEXT_OFFSET();
   }
 
 /* Matching complete */
