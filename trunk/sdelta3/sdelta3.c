@@ -397,8 +397,9 @@ fprintf(stderr,"mat %i to %i from %i tot %i\n",
           to.offset = match.to + match.total - 1;
           basement  =  match.total +  match.to;
         }
-              NEXT_OFFSET();
-      } else  NEXT_OFFSET();
+      }
+
+      NEXT_OFFSET();
   }
 
 /* Matching complete */
