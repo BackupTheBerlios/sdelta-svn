@@ -42,8 +42,8 @@ int	verbosity  =  0;
               where    +=  (frog);                \
               ceiling  -=  (frog);                \
       } else  ceiling   =  (frog) - 1;            \
-  }                                               \
-} while(0)
+    }                                             \
+  } while(0)
 
 
 void  favor_adjacent_found(FOUND f) {
@@ -119,14 +119,6 @@ u_int32_t       remove_tripe_found(FOUND f) {
   return f.offset;
 }
 
-
-#define  NEXT_OFFSET()                                                        \
-  do {                                                                        \
-    while ((to.ceiling > to.offset) && ! (trip_byte(to.buffer[to.offset++]))) \
-      ;                                                                       \
-    while ((to.ceiling > to.offset) &&   (trip_byte(to.buffer[to.offset  ]))) \
-      to.offset++;                                                            \
-  } while(0)
 
 
 void	output_sdelta(FOUND found, TO to, FROM from) {
@@ -309,10 +301,10 @@ leaping++;
 
       from.offset = from.ordered[where];
 
-     if ( ( *(u_int64_t *)(  to.buffer +   to.offset) !=
-            *(u_int64_t *)(from.buffer + from.offset) )  &&
-          ( from.ordereds > ++where ) )
-       from.offset = from.ordered[where];
+      if ( ( *(u_int64_t *)(  to.buffer +   to.offset) !=
+             *(u_int64_t *)(from.buffer + from.offset) )  &&
+           ( from.ordereds > ++where ) )
+        from.offset = from.ordered[where];
 
       match.blocks   =  1;
       match.total    =  0;
@@ -399,7 +391,10 @@ fprintf(stderr,"mat %i to %i from %i tot %i\n",
         }
       }
 
-      NEXT_OFFSET();
+      while (to.ceiling > to.offset && ! trip_byte(to.buffer[to.offset++]))
+      	  ;
+      while (to.ceiling > to.offset &&   trip_byte(to.buffer[to.offset  ]))
+	  to.offset++;
   }
 
 /* Matching complete */
