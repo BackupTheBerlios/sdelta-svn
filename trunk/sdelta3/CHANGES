@@ -1,3 +1,10 @@
+Thu Feb 16 20:35:09 UTC 2006	20060216	Kyle Sallee
+
+sd3 now passes environment variable $CSWIT
+as a command line parameter to compression
+programs when compressing tarballs.
+
+
 Mon Feb 13 21:54:36 UTC 2006	20060213	Kyle Sallee
 
 Added additional parameters for 7za to compress smaller.
